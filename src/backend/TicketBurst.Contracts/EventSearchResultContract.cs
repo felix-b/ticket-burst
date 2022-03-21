@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Immutable;
 
 namespace TicketBurst.Contracts;
 
@@ -17,7 +18,9 @@ public record EventSearchResultContract(
     string ShowTypeName,
     string GenreId,
     string GenreName,
-    string Title,
+    string? Title,
+    string? PosterImageUrl,
+    ImmutableList<string>? TroupeIds,
     DateTimeOffset SaleStartTime,
     DateTimeOffset EventStartTime,
     int DurationMinutes,

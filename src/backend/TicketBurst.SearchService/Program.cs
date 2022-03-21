@@ -2,12 +2,13 @@
 
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Http.Json;
+using Microsoft.OpenApi.Models;
 
-Console.WriteLine("Hello, World!");
+Console.WriteLine("TicketBurst Search Service starting.");
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.WebHost.UseUrls("http://localhost:3001");
+builder.WebHost.UseUrls("http://*:3001");
 
 // Add services to the container.
 
@@ -18,8 +19,11 @@ builder.Services.Configure<JsonOptions>(options => {
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
+builder.Services.AddSwaggerGen(options => options.SwaggerDoc("v1", new OpenApiInfo() {
+    Title = "ticketburst-services-search",
+    Description = "Searches for events and available seats. Responsible for Venues, Events, and Seating Maps.",
+    Version = "v1"
+}));
 
 var app = builder.Build();
 
@@ -30,3 +34,4 @@ app.UseSwaggerUI();
 app.MapControllers();
 
 app.Run();
+

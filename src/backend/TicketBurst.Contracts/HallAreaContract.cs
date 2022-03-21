@@ -2,5 +2,6 @@
 
 public record HallAreaContract(
     string Id,   
-    string Name
+    string Name,
+    string SeatingPlanImageUrl
 );

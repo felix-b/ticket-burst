@@ -1,0 +1,8 @@
+version: '3.4'
+
+services:
+  ticketburst-services-search:
+    image: ticketburst-services-search:v0
+    build:
+      context: ../../backend
+      dockerfile: TicketBurst.SearchService/Dockerfile

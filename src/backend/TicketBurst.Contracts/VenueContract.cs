@@ -1,17 +1,21 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.Collections.Immutable;
+using System.Text.Json.Serialization;
 
 namespace TicketBurst.Contracts;
 
 public record VenueContract(
     string Id,   
     string Name,   
-    string Address,   
-    double LocationLat,
-    double LocationLon,
-    string TimezoneId,   
-    int UtcOffsetHours,   
-    string Description,   
+    string Address,
+    GeoPointContract Location,
+    TimeZoneContract TimeZone,
+    string Description,
+    string WebSiteUrl,
     string PhotoImageUrl,
-    string SeatingPlanImageUrl,   
-    HallContract[]? Halls 
+    int DefaultCapacity,
+    ImmutableList<HallContract> Halls
 );
+
+public record GeoPointContract(double Lat, double Lon);
+public record TimeZoneContract(string Name, int UtcOffsetHours);
+

@@ -1,0 +1,54 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ticketburst-search-service
+  labels:
+    app: ticketburst
+    appsvc: ticketburst-search
+spec:
+  type: NodePort
+  selector:
+    appsvc: ticketburst-search
+  ports:
+  - name: http
+    port: 3001
+    targetPort: 80
+    protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ticketburst-search-deployment
+spec:
+  selector:
+    matchLabels:
+      appsvc: ticketburst-search
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: ticketburst
+        appsvc: ticketburst-search
+    spec:
+      containers:
+      - name: ticketburst-services-search
+        image: ticketburst-services-search:v0
+        ports:
+        - containerPort: 80
+        env:
+        - name: EXAMPLE_ENV_VAR
+          value: example-
+        - name: MY_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: MY_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: MY_POD_SERVICE_ACCOUNT
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.serviceAccountName          
+---

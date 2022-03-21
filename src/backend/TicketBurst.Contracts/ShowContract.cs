@@ -1,9 +1,13 @@
-﻿namespace TicketBurst.Contracts;
+﻿using System.Collections.Immutable;
+
+namespace TicketBurst.Contracts;
 
 public record ShowContract(
+    string Id, 
     string ShowTypeId,
     string GenreId,
-    string Id, 
-    string Name,
+    ImmutableList<string>? TroupeIds,
+    string Title,
+    string Description,
     string PosterImageUrl
 );

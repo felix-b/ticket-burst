@@ -1,28 +1,20 @@
 ﻿using System;
+using System.Collections.Immutable;
 
 namespace TicketBurst.Contracts;
 
 public record EventContract(
-    string HallId,
-    string HallName,
-    string HallSeatingMapId,
-    string VenueId,
-    string VenueName,
-    string VenueAddress,
-    double VenueLocationLat,
-    double VenueLocationLon,
-    string ShowId,
-    string ShowName,
-    string ShowTypeId,
-    string ShowTypeName,
-    string GenreId,
-    string GenreName,
     string Id,
-    string Title,
-    string Description,
-    string PosterImageUrl,
-    DateTimeOffset SaleStartTime,
-    DateTimeOffset EventStartTime,
+    string VenueId,
+    string HallId,
+    string HallSeatingMapId,
+    string ShowTypeId,
+    string ShowId,
+    DateTime SaleStartUtc,
+    DateTime EventStartUtc,
     int DurationMinutes,
-    bool CanBuyTickets
+    string? Title = null,
+    string? Description = null,
+    string? PosterImageUrl = null,
+    ImmutableList<string>? TroupeIds = null
 );
