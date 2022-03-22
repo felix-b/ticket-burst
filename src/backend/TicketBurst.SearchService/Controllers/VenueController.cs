@@ -24,7 +24,7 @@ public class VenueController : ControllerBase
         
         var reply = new ReplyContract<IEnumerable<VenueContract>>(
             data, 
-            ServerProcessMetadata.GetCombinedInfo()
+            ServiceProcessMetadata.GetCombinedInfo()
         );
 
         return new JsonResult(reply) {
@@ -43,7 +43,7 @@ public class VenueController : ControllerBase
         
         var reply = new ReplyContract<IEnumerable<HallContract>>(
             data, 
-            ServerProcessMetadata.GetCombinedInfo()
+            ServiceProcessMetadata.GetCombinedInfo()
         );
 
         return new JsonResult(reply) {

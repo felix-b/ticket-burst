@@ -1,0 +1,54 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ticketburst-reservation-service
+  labels:
+    app: ticketburst
+    appsvc: ticketburst-reservation
+spec:
+  type: NodePort
+  selector:
+    appsvc: ticketburst-reservation
+  ports:
+  - name: http
+    port: 3002
+    targetPort: 80
+    protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ticketburst-reservation-deployment
+spec:
+  selector:
+    matchLabels:
+      appsvc: ticketburst-reservation
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: ticketburst
+        appsvc: ticketburst-reservation
+    spec:
+      containers:
+      - name: ticketburst-services-reservation
+        image: ticketburst-services-reservation:v0
+        ports:
+        - containerPort: 80
+        env:
+        - name: EXAMPLE_ENV_VAR
+          value: example-
+        - name: MY_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: MY_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: MY_POD_SERVICE_ACCOUNT
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.serviceAccountName          
+---

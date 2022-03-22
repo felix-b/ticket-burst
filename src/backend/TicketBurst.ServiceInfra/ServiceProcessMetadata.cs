@@ -4,7 +4,7 @@ using TicketBurst.Contracts;
 
 namespace TicketBurst.ServiceInfra;
 
-public static class ServerProcessMetadata
+public static class ServiceProcessMetadata
 {
     private static ImmutableDictionary<string, string>? __metadata = null;
     
