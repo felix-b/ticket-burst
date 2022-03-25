@@ -1,7 +1,7 @@
 ﻿using System.Collections.Immutable;
-using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using TicketBurst.Contracts;
+using TicketBurst.SearchService.Contracts;
 using TicketBurst.ServiceInfra;
 
 namespace TicketBurst.SearchService.Controllers;
@@ -29,20 +29,24 @@ public class SearchController : ControllerBase
         [FromQuery] EventSearchRequestContract request)
     {
         var query = BuildQuery();
+        var maxResultCount = Math.Min(100, request.Count ?? 20); 
         var results = query
-            .Take(Math.Min(100, request.Count ?? 20))
+            .Take(maxResultCount)
             .ToArray()
-            .Select(EnrichResult)
+            .Select(EnrichEventToSearchResult)
             .ToArray();
-        
-        var reply = new ReplyContract<IEnumerable<EventSearchResultContract>>(
-            results, 
-            ServiceProcessMetadata.GetCombinedInfo()
-        );
 
-        return new JsonResult(reply) {
-            StatusCode = 200
-        };
+        return ApiResult.Success(200, results);
+
+        //
+        // var reply = new ReplyContract<IEnumerable<EventSearchResultContract>>(
+        //     results, 
+        //     ServiceProcessMetadata.GetCombinedInfo()
+        // );
+        //
+        // return new JsonResult(reply) {
+        //     StatusCode = 200
+        // };
 
         IQueryable<EventContract> BuildQuery()
         {
@@ -70,48 +74,152 @@ public class SearchController : ControllerBase
             
             return query;
         }
-
-        EventSearchResultContract EnrichResult(EventContract result)
+    }
+    
+    [HttpGet("event/{id}")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404)]
+    public ActionResult<ReplyContract<EventSearchFullDetailContract>> GetEventFullDetail(string id)
+    {
+        var @event = MockDatabase.Events.All.FirstOrDefault(e => e.Id == id);
+        if (@event == null)
         {
-            var venue = MockDatabase.Venues.All.First(v => v.Id == result.VenueId);
-            var hall = venue.Halls[0];
-            var show = MockDatabase.Shows.All.First(s => s.Id == result.ShowId);
-            var showType = MockDatabase.ShowTypes.All.First(t => t.Id == result.ShowTypeId);
-            var genre = MockDatabase.Genres.All.First(g => g.Id == show.GenreId);
-            var isSelling = (
-                result.SaleStartUtc < DateTime.UtcNow &&
-                DateTime.UtcNow < result.EventStartUtc.AddMinutes(result.DurationMinutes));
-            var numbrOfSeatsLeft = (isSelling
-                ? MockDatabase.EventSeatingStatusCache.Retrieve(result.Id).AvailableCapacity
-                : DateTime.UtcNow < result.EventStartUtc
-                    ? venue.DefaultCapacity
-                    : 0);
-            
-            return new EventSearchResultContract(
-                EventId: result.Id,
-                HallId: hall.Id,
-                HallName: hall.Name,
-                VenueId: venue.Id,
-                VenueName: venue.Name,
-                VenueAddress: venue.Address,
-                VenueLocation: venue.Location,
-                VenueTimeZone: venue.TimeZone,
-                ShowId: show.Id,
-                ShowName: show.Title,
-                ShowDescription: show.Description,
-                ShowTypeId: showType.Id,
-                ShowTypeName: showType.Name,
-                GenreId: genre.Id,
-                GenreName: genre.Name,
-                EventTitle: $"{show.Title} {result.Title ?? string.Empty}".Trim(),
-                EventDescription: result.Description,
-                PosterImageUrl: result.PosterImageUrl ?? show.PosterImageUrl,
-                TroupeIds: result.TroupeIds ?? show.TroupeIds,
-                SaleStartTime: result.SaleStartUtc,
-                EventStartTime: result.EventStartUtc,
-                DurationMinutes: result.DurationMinutes,
-                CanBuyTickets: isSelling,
-                NumberOfSeatsLeft: numbrOfSeatsLeft);
+            return ApiResult.Error(404);
         }
+
+        var enrichedEvent = EnrichEventToSearchResult(@event);
+        var hallStatusCache = MockDatabase.EventSeatingStatusCache.Retrieve(@event.Id);
+        var hallInfo = GetFullDetailHallInfo(@event, hallStatusCache, out _);
+        var fullDetail = new EventSearchFullDetailContract(
+            Event: enrichedEvent,
+            Hall: hallInfo);
+
+        return ApiResult.Success(200, fullDetail);
+    }
+
+    [HttpGet("event/{eventId}/area/{areaId}")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404)]
+    public ActionResult<ReplyContract<EventSearchAreaSeatingContract>> GetEventFullDetail(string eventId, string areaId)
+    {
+        var @event = MockDatabase.Events.All.FirstOrDefault(e => e.Id == eventId);
+        if (@event == null)
+        {
+            return ApiResult.Error(404);
+        }
+        
+        var hallStatusCache = MockDatabase.EventSeatingStatusCache.Retrieve(@event.Id);
+        if (!hallStatusCache.SeatingByAreaId.ContainsKey(areaId))
+        {
+            return ApiResult.Error(404);
+        }
+        
+        var enrichedEvent = EnrichEventToSearchResult(@event);
+        var hallInfo = GetFullDetailHallInfo(@event, hallStatusCache, out var hallSeatingMap);
+        var header = new EventSearchFullDetailContract(
+            Event: enrichedEvent,
+            Hall: hallInfo);
+
+        var areaSeatingMapWithStatus = GetAreaSeatingMapWithStatus(hallSeatingMap, hallStatusCache, areaId);
+        var reply = new EventSearchAreaSeatingContract(
+            Header: header,
+            HallAreaId: areaId,
+            HallAreaName: areaSeatingMapWithStatus.HallAreaName,
+            AvailableCapacity: hallStatusCache.SeatingByAreaId[areaId].AvailableCapacity,
+            SeatingMap: areaSeatingMapWithStatus);
+
+        return ApiResult.Success(200, reply);
+    }
+    
+    private EventSearchResultContract EnrichEventToSearchResult(EventContract @event)
+    {
+        var venue = MockDatabase.Venues.All.First(v => v.Id == @event.VenueId);
+        var hall = venue.Halls[0];
+        var show = MockDatabase.Shows.All.First(s => s.Id == @event.ShowId);
+        var showType = MockDatabase.ShowTypes.All.First(t => t.Id == @event.ShowTypeId);
+        var genre = MockDatabase.Genres.All.First(g => g.Id == show.GenreId);
+        var troupeIds = @event.TroupeIds ?? show.TroupeIds;
+        var troupes = troupeIds != null
+            ? MockDatabase.Troupes.All.Where(t => troupeIds.IndexOf(t.Id) >= 0).ToImmutableList()
+            : null;
+        var numbrOfSeatsLeft = (@event.IsOpenForSale
+            ? MockDatabase.EventSeatingStatusCache.Retrieve(@event.Id).AvailableCapacity
+            : DateTime.UtcNow < @event.EventStartUtc
+                ? venue.DefaultCapacity
+                : 0);
+        
+        var result = new EventSearchResultContract(
+            EventId: @event.Id,
+            HallId: hall.Id,
+            HallName: hall.Name,
+            VenueId: venue.Id,
+            VenueName: venue.Name,
+            VenueAddress: venue.Address,
+            VenueLocation: venue.Location,
+            VenueTimeZone: venue.TimeZone,
+            ShowId: show.Id,
+            ShowName: show.Title,
+            ShowDescription: show.Description,
+            ShowTypeId: showType.Id,
+            ShowTypeName: showType.Name,
+            GenreId: genre.Id,
+            GenreName: genre.Name,
+            EventTitle: $"{show.Title} {@event.Title ?? string.Empty}".Trim(),
+            EventDescription: @event.Description,
+            PosterImageUrl: @event.PosterImageUrl ?? show.PosterImageUrl,
+            Troupes: troupes,
+            SaleStartTime: @event.SaleStartUtc,
+            EventStartTime: @event.EventStartUtc,
+            DurationMinutes: @event.DurationMinutes,
+            IsOpenForSale: @event.IsOpenForSale,
+            NumberOfSeatsLeft: numbrOfSeatsLeft);
+
+        return result;
+    }
+
+    private EventSearchFullDetailContract.HallInfo GetFullDetailHallInfo(
+        EventContract @event, 
+        EventSeatingCacheContract hallStatusCache,
+        out HallSeatingMapContract hallSeatingMap)
+    {
+        hallSeatingMap = 
+            MockDatabase.HallSeatingMaps.All.FirstOrDefault(m => m.Id == @event.HallSeatingMapId)
+            ?? throw new InvalidDataException($"Hall seating map [{@event.HallSeatingMapId}] for event [{@event.Id}] not found");
+
+        var areaInfos = hallSeatingMap.Areas.Select(area => new EventSearchFullDetailContract.AreaInfo(
+            HallAreaId: area.HallAreaId,
+            Name: area.HallAreaName,
+            SeatingPlanImageUrl: area.PlanImageUrl,
+            TotalCapacity: area.Capacity,
+            AvailableCapacity: hallStatusCache.SeatingByAreaId[area.HallAreaId].AvailableCapacity
+        )).ToImmutableList();
+
+        return new EventSearchFullDetailContract.HallInfo(
+            SeatingPlanImageUrl: hallSeatingMap.PlanImageUrl,
+            TotalCapacity: hallSeatingMap.Capacity,
+            AvailableCapacity: hallStatusCache.AvailableCapacity,
+            Areas: areaInfos
+        );
+    }
+
+    private AreaSeatingMapContract GetAreaSeatingMapWithStatus(
+        HallSeatingMapContract hallSeatingMap,
+        EventSeatingCacheContract hallStatusCache, 
+        string hallAreaId)
+    {
+        var areaStatusCache = hallStatusCache.SeatingByAreaId[hallAreaId];
+        var areaSeatingMap = hallSeatingMap.Areas.First(area => area.HallAreaId == hallAreaId); //TODO: faster lookup?
+        
+        var areaSeatingMapWithStatus = areaSeatingMap with { 
+            Rows = areaSeatingMap.Rows.Select(row => row with {
+                Seats = row.Seats.Select(seat => seat with {
+                    Status = areaStatusCache.AvailableSeatIds.Contains(seat.Id) 
+                        ? SeatStatus.Available 
+                        : SeatStatus.Sold
+                }).ToImmutableList()
+            }).ToImmutableList()
+        };
+
+        return areaSeatingMapWithStatus;
     }
 }

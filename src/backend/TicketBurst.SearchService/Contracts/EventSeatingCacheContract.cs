@@ -1,6 +1,6 @@
 ﻿using System.Collections.Immutable;
 
-namespace TicketBurst.SearchService;
+namespace TicketBurst.SearchService.Contracts;
 
 public record EventSeatingCacheContract(
     string EventId,

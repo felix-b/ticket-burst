@@ -1,5 +1,6 @@
 ﻿using System.Collections.Immutable;
 using TicketBurst.Contracts;
+using TicketBurst.SearchService.Contracts;
 
 namespace TicketBurst.SearchService;
 
@@ -388,7 +389,7 @@ public static class MockDatabase
                 PosterImageUrl: string.Empty);
         }
 
-        public static readonly ImmutableList<EventContract> All = MakeImmutableList(
+        private static ImmutableList<EventContract> __all = MakeImmutableList(
             #region Items
             
             Football.QuarterFinal1of4,
@@ -402,6 +403,17 @@ public static class MockDatabase
 
             #endregion
         );
+
+        public static ImmutableList<EventContract> All => __all;
+
+        public static void UpdateIsOpenForSale(string eventId, bool newValue)
+        {
+            __all = __all
+                .Select(e => e.Id != eventId
+                    ? e
+                    : e with { IsOpenForSale = newValue })
+                .ToImmutableList();
+        }
     }
 
     public static class EventSeatingStatusCache
@@ -534,15 +546,17 @@ public static class MockDatabase
                 HallId: hallId,
                 Name: "Default",
                 Capacity: hallCapacity,
-                Areas: areaIds.Select(areaId => CreateAreaSeatingMap(
+                PlanImageUrl: string.Empty,
+                Areas: areaIds.Select((areaId, areaIndex) => CreateAreaSeatingMap(
                     seatingMapId,
                     areaId,
-                    areaId == areaIds[^1] ? lastAreaCapacity : eachAreaCapacity
+                    areaName: (areaIndex + 1).ToString(),
+                    areaCapacity: areaId == areaIds[^1] ? lastAreaCapacity : eachAreaCapacity
                 )).ToImmutableList()
             );
         }
         
-        AreaSeatingMapContract CreateAreaSeatingMap(string seatingMapId, string areaId, int areaCapacity)
+        AreaSeatingMapContract CreateAreaSeatingMap(string seatingMapId, string areaId, string areaName, int areaCapacity)
         {
             var seatsInEachRow = 25;
             SplitCapacityIntoBoxes(areaCapacity, seatsInEachRow, out var rowCount, out var seatsInLastRow);
@@ -550,7 +564,9 @@ public static class MockDatabase
             return new AreaSeatingMapContract(
                 SeatingMapId: seatingMapId,
                 HallAreaId: areaId,
+                HallAreaName: areaName,
                 Capacity: areaCapacity,
+                PlanImageUrl: string.Empty,
                 Rows: Enumerable.Range(1, rowCount).Select(rowNum => CreateAreaSeatingMapRow(
                     rowNum, 
                     rowNum < rowCount ? seatsInEachRow : seatsInLastRow
@@ -583,7 +599,7 @@ public static class MockDatabase
         }
     }
 
-    private static string MakeNewId()
+    public static string MakeNewId()
     {
         return Guid.NewGuid().ToString("d");
     }

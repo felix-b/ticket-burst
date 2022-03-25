@@ -1,7 +1,7 @@
 ﻿using System.Collections.Immutable;
 using TicketBurst.Contracts;
 
-namespace TicketBurst.ReservationService;
+namespace TicketBurst.ReservationService.Contracts;
 
 public record ReservationJournalRecord(
     string Id,

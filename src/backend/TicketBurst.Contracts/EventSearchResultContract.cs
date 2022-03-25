@@ -22,10 +22,10 @@ public record EventSearchResultContract(
     string EventTitle,
     string? EventDescription,
     string PosterImageUrl,
-    ImmutableList<string>? TroupeIds,
+    ImmutableList<TroupeContract>? Troupes,
     DateTimeOffset SaleStartTime,
     DateTimeOffset EventStartTime,
     int DurationMinutes,
-    bool CanBuyTickets,
+    bool IsOpenForSale,
     int NumberOfSeatsLeft
 );

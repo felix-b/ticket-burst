@@ -5,17 +5,17 @@ using TicketBurst.ServiceInfra;
 namespace TicketBurst.SearchService.Controllers;
 
 [ApiController]
-[Route("capacity")]
-public class CapacityController : ControllerBase
+[Route("notify")]
+public class NotificationController : ControllerBase
 {
-    public CapacityController(ILogger<CapacityController> logger)
+    public NotificationController(ILogger<NotificationController> logger)
     {
     }
 
-    [HttpPost("update")]
+    [HttpPost("event-area-update")]
     [ProducesResponseType(200)]
     [ProducesResponseType(400)]
-    public ActionResult<ReplyContract<string>> UpdateAreaCapacity(
+    public ActionResult<ReplyContract<string>> HandleEventAreaUpdateNotification(
         [FromBody] EventAreaUpdateNotificationContract notification)
     {
         var isValid = ValidateNotification(out var validationResult);

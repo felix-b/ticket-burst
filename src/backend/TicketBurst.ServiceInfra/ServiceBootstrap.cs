@@ -9,11 +9,12 @@ namespace TicketBurst.ServiceInfra;
 
 public static class ServiceBootstrap
 {
-    public static WebApplication CreateAspNetCoreEndpoint(
+    public static WebApplication CreateHttpEndpoint(
         string serviceName, 
         string serviceDescription,
         int listenPortNumber,
-        string[] commandLineArgs)
+        string[] commandLineArgs, 
+        Action<WebApplicationBuilder>? configure = null)
     {
         var builder = WebApplication.CreateBuilder(commandLineArgs);
 
@@ -25,7 +26,11 @@ public static class ServiceBootstrap
         });
 
         builder.Services.AddDataProtection();
+        
+        configure?.Invoke(builder);
+        
         builder.Services.AddControllers();
+        
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen(options => {

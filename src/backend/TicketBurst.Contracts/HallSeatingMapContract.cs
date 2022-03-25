@@ -6,6 +6,7 @@ public record HallSeatingMapContract(
     string Id,
     string HallId,
     string Name,
+    string PlanImageUrl,
     int Capacity,
     ImmutableList<AreaSeatingMapContract> Areas
 );
@@ -13,6 +14,8 @@ public record HallSeatingMapContract(
 public record AreaSeatingMapContract(
     string SeatingMapId,
     string HallAreaId,
+    string HallAreaName,
+    string PlanImageUrl,
     int Capacity,
     ImmutableList<SeatingMapRowContract> Rows
 );
@@ -25,5 +28,6 @@ public record SeatingMapRowContract(
 
 public record SeatingMapSeatContract(
     string Id,
-    string Name
+    string Name,
+    SeatStatus? Status = null
 );

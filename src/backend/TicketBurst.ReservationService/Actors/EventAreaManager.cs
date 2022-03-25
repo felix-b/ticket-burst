@@ -1,6 +1,7 @@
 ﻿using System.Collections.Immutable;
 using System.Net;
 using TicketBurst.Contracts;
+using TicketBurst.ReservationService.Contracts;
 using TicketBurst.ServiceInfra;
 
 namespace TicketBurst.ReservationService.Actors;

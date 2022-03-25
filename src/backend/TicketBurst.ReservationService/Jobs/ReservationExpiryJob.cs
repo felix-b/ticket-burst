@@ -1,4 +1,6 @@
-﻿namespace TicketBurst.ReservationService.Actors;
+﻿using TicketBurst.ReservationService.Actors;
+
+namespace TicketBurst.ReservationService.Jobs;
 
 public class ReservationExpiryJob : IDisposable
 {

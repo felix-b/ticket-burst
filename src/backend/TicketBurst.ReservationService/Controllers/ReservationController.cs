@@ -20,11 +20,11 @@ public class ReservationController : ControllerBase
         _checkoutTokenProtector = protectionProvider.CreateProtector(DataProtectionPurpose.CheckoutToken);
     }
 
-    [HttpPost("reserve-seats")]
+    [HttpPost("grab")]
     [ProducesResponseType(200)]
     [ProducesResponseType(400)]
     [ProducesResponseType(409)]
-    public async Task<ActionResult<ReplyContract<SeatReservationReplyContract>>> ReserveSeats(
+    public async Task<ActionResult<ReplyContract<SeatReservationReplyContract>>> GrabSeats(
         [FromBody] SeatReservationRequestContract request)
     {
         var isValid = ValidateRequest();
@@ -56,7 +56,6 @@ public class ReservationController : ControllerBase
                 request.SeatIds.Length > 0 &&
                 !request.SeatIds.Any(string.IsNullOrWhiteSpace));
         }
-        
     }
 
     private SeatReservationReplyContract? EncryptCheckoutToken(SeatReservationReplyContract? reply)
