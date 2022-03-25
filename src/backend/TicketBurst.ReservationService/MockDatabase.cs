@@ -4,6 +4,11 @@ namespace TicketBurst.ReservationService;
 
 public static class MockDatabase
 {
+    public static string MakeNewId()
+    {
+        return Guid.NewGuid().ToString("d");
+    }
+    
     public static class ReservationJournal
     {
         private static readonly ConcurrentBag<ReservationJournalRecord> __all = new();

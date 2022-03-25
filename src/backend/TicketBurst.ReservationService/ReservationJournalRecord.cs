@@ -1,4 +1,5 @@
 ﻿using System.Collections.Immutable;
+using TicketBurst.Contracts;
 
 namespace TicketBurst.ReservationService;
 
@@ -10,12 +11,16 @@ public record ReservationJournalRecord(
     string HallSeatingMapId,
     ulong SequenceNo,
     ImmutableList<string> SeatIds,
-    ReservationActionType Action
+    ReservationAction Action,
+    SeatStatus ResultStatus
 );
 
-public enum ReservationActionType
+public enum ReservationAction
 {
-    Reserved = 1,
-    ReleasedOrderCancelled = 2,
-    ReleasedTimedOut = 3,
+    Unspecified = 0,
+    TemporarilyReserve = 1,
+    PermanentlyReservePerOrderCompleted = 2,
+    ReleasePerTimeout = 3,
+    ReleasePerOrderCanceled = 4,
 }
+

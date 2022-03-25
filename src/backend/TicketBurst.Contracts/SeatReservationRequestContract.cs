@@ -13,7 +13,17 @@ public class SeatReservationRequestContract
 public record SeatReservationReplyContract(
     SeatReservationRequestContract Request,
     bool Success,
-    string? ReservationId,
+    string? CheckoutToken,
     DateTime? ReservationExpiryUtc,
-    string? ErrorCode
-);
+    string? ErrorCode = null)
+{
+    public static SeatReservationReplyContract FromError(SeatReservationRequestContract request, string errorCode)
+    {
+        return new SeatReservationReplyContract(
+            Request: request,
+            Success: false,
+            CheckoutToken: null,
+            ReservationExpiryUtc: null,
+            ErrorCode: errorCode);
+    }
+}

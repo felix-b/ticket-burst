@@ -14,15 +14,18 @@ public record EventSearchResultContract(
     TimeZoneContract VenueTimeZone,
     string ShowId,
     string ShowName,
+    string ShowDescription,
     string ShowTypeId,
     string ShowTypeName,
     string GenreId,
     string GenreName,
-    string Title,
+    string EventTitle,
+    string? EventDescription,
     string PosterImageUrl,
-    ImmutableList<string> TroupeIds,
+    ImmutableList<string>? TroupeIds,
     DateTimeOffset SaleStartTime,
     DateTimeOffset EventStartTime,
     int DurationMinutes,
-    bool CanBuyTickets
+    bool CanBuyTickets,
+    int NumberOfSeatsLeft
 );

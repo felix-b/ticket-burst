@@ -269,6 +269,7 @@ public static class MockDatabase
                 SaleStartUtc: DateTime.UtcNow.AddMinutes(1),
                 EventStartUtc: new DateTime(2022, 4, 12, 10, 30, 0, DateTimeKind.Local),
                 DurationMinutes: 180,
+                IsOpenForSale: false,
                 Title: $"{Troupes.Football.Brazil.Name} - {Troupes.Football.Colombia.Name}",
                 Description: string.Empty,
                 PosterImageUrl: string.Empty);
@@ -285,6 +286,7 @@ public static class MockDatabase
                 SaleStartUtc: DateTime.UtcNow.AddMinutes(1),
                 EventStartUtc: new DateTime(2022, 4, 12, 10, 30, 0, DateTimeKind.Local),
                 DurationMinutes: 180,
+                IsOpenForSale: false,
                 Title: $"{Troupes.Football.SouthKorea.Name} - {Troupes.Football.Honduras.Name}",
                 Description: string.Empty,
                 PosterImageUrl: string.Empty);
@@ -300,6 +302,7 @@ public static class MockDatabase
                 SaleStartUtc: DateTime.UtcNow.AddMinutes(1),
                 EventStartUtc: new DateTime(2022, 4, 12, 10, 30, 0, DateTimeKind.Local),
                 DurationMinutes: 180,
+                IsOpenForSale: false,
                 Title: $"{Troupes.Football.Nigeria.Name} - {Troupes.Football.Denmark.Name}",
                 Description: string.Empty,
                 PosterImageUrl: string.Empty);
@@ -315,6 +318,7 @@ public static class MockDatabase
                 SaleStartUtc: DateTime.UtcNow.AddMinutes(1),
                 EventStartUtc: new DateTime(2022, 4, 12, 10, 30, 0, DateTimeKind.Local),
                 DurationMinutes: 180,
+                IsOpenForSale: false,
                 Title: $"{Troupes.Football.Portugal.Name} - {Troupes.Football.Germany.Name}",
                 Description: string.Empty,
                 PosterImageUrl: string.Empty);
@@ -330,6 +334,7 @@ public static class MockDatabase
                 SaleStartUtc: DateTime.UtcNow.AddMinutes(1),
                 EventStartUtc: new DateTime(2022, 4, 15, 10, 30, 0, DateTimeKind.Local),
                 DurationMinutes: 180,
+                IsOpenForSale: false,
                 Title: string.Empty,
                 Description: string.Empty,
                 PosterImageUrl: string.Empty);
@@ -345,6 +350,7 @@ public static class MockDatabase
                 SaleStartUtc: DateTime.UtcNow.AddMinutes(1),
                 EventStartUtc: new DateTime(2022, 4, 15, 10, 30, 0, DateTimeKind.Local),
                 DurationMinutes: 180,
+                IsOpenForSale: false,
                 Title: string.Empty,
                 Description: string.Empty,
                 PosterImageUrl: string.Empty);
@@ -360,6 +366,7 @@ public static class MockDatabase
                 SaleStartUtc: DateTime.UtcNow.AddMinutes(1),
                 EventStartUtc: new DateTime(2022, 4, 20, 10, 30, 0, DateTimeKind.Local),
                 DurationMinutes: 180,
+                IsOpenForSale: false,
                 Title: string.Empty,
                 Description: string.Empty,
                 PosterImageUrl: string.Empty);
@@ -375,6 +382,7 @@ public static class MockDatabase
                 SaleStartUtc: DateTime.UtcNow.AddMinutes(1),
                 EventStartUtc: new DateTime(2022, 4, 20, 10, 30, 0, DateTimeKind.Local),
                 DurationMinutes: 180,
+                IsOpenForSale: false,
                 Title: string.Empty,
                 Description: string.Empty,
                 PosterImageUrl: string.Empty);
@@ -394,6 +402,104 @@ public static class MockDatabase
 
             #endregion
         );
+    }
+
+    public static class EventSeatingStatusCache
+    {
+        private static readonly object __updateSyncRoot = new();
+        
+        private static ImmutableDictionary<string, EventSeatingCacheContract> __byEventId = 
+            ImmutableDictionary<string, EventSeatingCacheContract>.Empty;
+
+        public static ImmutableDictionary<string, EventSeatingCacheContract> ByEventId => __byEventId;
+
+        public static void Update(EventAreaUpdateNotificationContract notification)
+        {
+            lock (__updateSyncRoot)
+            {
+                if (!__byEventId.TryGetValue(notification.EventId, out var oldEventEntry))
+                {
+                    oldEventEntry = CreateNewEventEntry(notification.EventId);
+                }
+
+                var oldAreaEntry = oldEventEntry.SeatingByAreaId[notification.HallAreaId];
+                if (oldAreaEntry.NotificationSequenceNo >= notification.SequenceNo)
+                {
+                    return; // ignore notification if already received a more recent one
+                }
+
+                var newAreaEntry = oldAreaEntry with {
+                    AvailableCapacity = notification.AvailableCapacity,
+                    AvailableSeatIds = notification.StatusBySeatId
+                        .Where(kvp => kvp.Value == SeatStatus.Available)
+                        .Select(kvp => kvp.Key)
+                        .ToImmutableHashSet()
+                };
+
+                var deltaCapacity = newAreaEntry.AvailableCapacity - oldAreaEntry.AvailableCapacity; 
+                var newEventEntry = oldEventEntry with {
+                    SeatingByAreaId = oldEventEntry.SeatingByAreaId.SetItem(notification.HallAreaId, newAreaEntry),
+                    AvailableCapacity = oldEventEntry.AvailableCapacity + deltaCapacity,
+                };
+
+                __byEventId = __byEventId.SetItem(notification.EventId, newEventEntry);
+            }
+        }
+
+        public static EventSeatingCacheContract Retrieve(string eventId)
+        {
+            if (__byEventId.TryGetValue(eventId, out var existingEntry))
+            {
+                return existingEntry;
+            }
+
+            lock (__updateSyncRoot)
+            {
+                if (__byEventId.TryGetValue(eventId, out existingEntry))
+                {
+                    return existingEntry;
+                }
+
+                var newEntry = CreateNewEventEntry(eventId);
+                __byEventId = __byEventId.SetItem(eventId, newEntry);
+
+                return newEntry;
+            }
+        }
+
+        private static EventSeatingCacheContract CreateNewEventEntry(string eventId)
+        {
+            var @event = Events.All.First(e => e.Id == eventId);
+            var seatingMap = HallSeatingMaps.All.First(m => m.Id == @event.HallSeatingMapId);
+
+            var areaEntries = seatingMap.Areas
+                .Select(area => new EventAreaSeatingCacheContract(
+                    HallAreaId: area.HallAreaId,
+                    TotalCapacity: area.Capacity,
+                    AvailableCapacity: area.Capacity,
+                    NotificationSequenceNo: 0,
+                    AvailableSeatIds: GetAllSeatIdsInArea(area)
+                ));
+            
+            return new EventSeatingCacheContract(
+                EventId: eventId,
+                TotalCapacity: seatingMap.Capacity,
+                AvailableCapacity: seatingMap.Capacity,
+                SeatingByAreaId: areaEntries.ToImmutableDictionary(a => a.HallAreaId));
+
+            ImmutableHashSet<string> GetAllSeatIdsInArea(AreaSeatingMapContract area)
+            {
+                var builder = ImmutableHashSet.CreateBuilder<string>();
+                foreach (var row in area.Rows)
+                {
+                    foreach (var seat in row.Seats)
+                    {
+                        builder.Add(seat.Id);
+                    }
+                }
+                return builder.ToImmutable();
+            }
+        }
     }
 
     private static ImmutableList<HallContract> MakeStadiumHall(int hallCapacity)
@@ -422,25 +528,29 @@ public static class MockDatabase
 
         HallSeatingMapContract CreateHallSeatingMap()
         {
+            var seatingMapId = MakeNewId(); 
             return new HallSeatingMapContract(
-                Id: MakeNewId(),
+                Id: seatingMapId,
                 HallId: hallId,
                 Name: "Default",
+                Capacity: hallCapacity,
                 Areas: areaIds.Select(areaId => CreateAreaSeatingMap(
+                    seatingMapId,
                     areaId,
                     areaId == areaIds[^1] ? lastAreaCapacity : eachAreaCapacity
                 )).ToImmutableList()
             );
         }
         
-        AreaSeatingMapContract CreateAreaSeatingMap(string areaId, int areaCapacity)
+        AreaSeatingMapContract CreateAreaSeatingMap(string seatingMapId, string areaId, int areaCapacity)
         {
             var seatsInEachRow = 25;
             SplitCapacityIntoBoxes(areaCapacity, seatsInEachRow, out var rowCount, out var seatsInLastRow);
             
             return new AreaSeatingMapContract(
-                Id: MakeNewId(),
+                SeatingMapId: seatingMapId,
                 HallAreaId: areaId,
+                Capacity: areaCapacity,
                 Rows: Enumerable.Range(1, rowCount).Select(rowNum => CreateAreaSeatingMapRow(
                     rowNum, 
                     rowNum < rowCount ? seatsInEachRow : seatsInLastRow

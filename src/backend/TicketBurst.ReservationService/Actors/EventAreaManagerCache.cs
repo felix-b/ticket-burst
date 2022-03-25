@@ -21,11 +21,44 @@ public class EventAreaManagerCache
         async Task AddEntry()
         {
             var loadCompletion = new TaskCompletionSource<EventAreaManager?>();
+
             if (_loadPromiseByEventAreaKey.TryAdd(key, loadCompletion.Task))
             {
-                var actor = await LoadActor(eventId, areaId);
-                loadCompletion.SetResult(actor);
+                Console.WriteLine($"Load EAM[{key}] > in progress.");
+
+                try
+                {
+                    var actor = await LoadActor(eventId, areaId);
+                    Console.WriteLine($"Load EAM[{key}] > SUCCESS");
+                    loadCompletion.SetResult(actor);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($"Load EAM[{key}] > FAILED! {e.ToString()}");
+                    loadCompletion.SetResult(null);
+                }
             }
+        }
+    }
+
+    public void ForEachActor(Action<EventAreaManager> action)
+    {
+        var snapshot = _loadPromiseByEventAreaKey.Values.ToArray();
+        
+        foreach (var promise in snapshot.Where(p => p.IsCompleted))
+        {
+            try
+            {
+                var actor = promise.Result;
+                if (actor != null)
+                {
+                    action(actor);
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }            
         }
     }
 

@@ -8,13 +8,23 @@ namespace TicketBurst.ServiceInfra;
 
 public static class ServiceClient
 {
-    private static readonly IReadOnlyDictionary<string, string> __hostByServiceName = new Dictionary<string, string> {
-        { "search", Environment.GetEnvironmentVariable("TICKETBURST_SERVICEMAP_SEARCH") ?? "localhost:3001" },  
-        { "reservation", Environment.GetEnvironmentVariable("TICKETBURST_SERVICEMAP_RESERVATION") ?? "localhost:3002" },  
+    private static readonly IReadOnlyDictionary<ServiceName, string> __hostByServiceName = new Dictionary<ServiceName, string> {
+        {
+            ServiceName.Search, 
+            Environment.GetEnvironmentVariable("TICKETBURST_SERVICEMAP_SEARCH") ?? "localhost:3001"
+        },
+        {
+            ServiceName.Reservation, 
+            Environment.GetEnvironmentVariable("TICKETBURST_SERVICEMAP_RESERVATION") ?? "localhost:3002"
+        },  
+        {
+            ServiceName.Checkout, 
+            Environment.GetEnvironmentVariable("TICKETBURST_SERVICEMAP_CHECKOUT") ?? "localhost:3003"
+        },  
     };
     
     public static async Task<T?> HttpGetJson<T>(
-        string serviceName, 
+        ServiceName serviceName, 
         string[]? path = null, 
         Tuple<string, string>[]? query = null)
         where T : class
@@ -39,7 +49,7 @@ public static class ServiceClient
     }
  
     public static async Task<T?> HttpPostJson<T>(
-        string serviceName, 
+        ServiceName serviceName, 
         string[]? path = null, 
         Tuple<string, string>[]? query = null, 
         object? body = null)
@@ -92,7 +102,7 @@ public static class ServiceClient
     }
     
     private static string GetRequestUrl(
-        string serviceName, 
+        ServiceName serviceName, 
         string[]? path = null, 
         Tuple<string, string>[]? query = null)
     {
@@ -110,7 +120,7 @@ public static class ServiceClient
 
         if (query != null)
         {
-            for (int i = 0; i < path.Length; i++)
+            for (int i = 0; i < query.Length; i++)
             {
                 builder.Append(i == 0 ? '?' : '&');
                 builder.Append(query[i].Item1);
@@ -121,4 +131,11 @@ public static class ServiceClient
 
         return builder.ToString();
     }
+}
+
+public enum ServiceName
+{
+    Search,
+    Reservation,
+    Checkout
 }

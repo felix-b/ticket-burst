@@ -6,12 +6,14 @@ public record HallSeatingMapContract(
     string Id,
     string HallId,
     string Name,
+    int Capacity,
     ImmutableList<AreaSeatingMapContract> Areas
 );
 
 public record AreaSeatingMapContract(
-    string Id,
+    string SeatingMapId,
     string HallAreaId,
+    int Capacity,
     ImmutableList<SeatingMapRowContract> Rows
 );
 

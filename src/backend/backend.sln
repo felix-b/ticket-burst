@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TicketBurst.ServiceInfra", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TicketBurst.ReservationService", "TicketBurst.ReservationService\TicketBurst.ReservationService.csproj", "{A24754DC-0A98-476F-8354-812754D0D3B5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TicketBurst.Tests", "TicketBurst.Tests\TicketBurst.Tests.csproj", "{E45E7CA4-0F45-4D30-B51A-221C72F2B3C1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -72,5 +74,17 @@ Global
 		{A24754DC-0A98-476F-8354-812754D0D3B5}.Release|x64.Build.0 = Release|Any CPU
 		{A24754DC-0A98-476F-8354-812754D0D3B5}.Release|x86.ActiveCfg = Release|Any CPU
 		{A24754DC-0A98-476F-8354-812754D0D3B5}.Release|x86.Build.0 = Release|Any CPU
+		{E45E7CA4-0F45-4D30-B51A-221C72F2B3C1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E45E7CA4-0F45-4D30-B51A-221C72F2B3C1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E45E7CA4-0F45-4D30-B51A-221C72F2B3C1}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{E45E7CA4-0F45-4D30-B51A-221C72F2B3C1}.Debug|x64.Build.0 = Debug|Any CPU
+		{E45E7CA4-0F45-4D30-B51A-221C72F2B3C1}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{E45E7CA4-0F45-4D30-B51A-221C72F2B3C1}.Debug|x86.Build.0 = Debug|Any CPU
+		{E45E7CA4-0F45-4D30-B51A-221C72F2B3C1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E45E7CA4-0F45-4D30-B51A-221C72F2B3C1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E45E7CA4-0F45-4D30-B51A-221C72F2B3C1}.Release|x64.ActiveCfg = Release|Any CPU
+		{E45E7CA4-0F45-4D30-B51A-221C72F2B3C1}.Release|x64.Build.0 = Release|Any CPU
+		{E45E7CA4-0F45-4D30-B51A-221C72F2B3C1}.Release|x86.ActiveCfg = Release|Any CPU
+		{E45E7CA4-0F45-4D30-B51A-221C72F2B3C1}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

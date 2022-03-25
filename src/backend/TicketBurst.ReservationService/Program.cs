@@ -1,4 +1,5 @@
 ﻿using TicketBurst.ReservationService;
+using TicketBurst.ReservationService.Actors;
 using TicketBurst.ServiceInfra;
 
 Console.WriteLine("TicketBurst Search Service starting.");
@@ -10,4 +11,8 @@ var app = ServiceBootstrap.CreateAspNetCoreEndpoint(
     listenPortNumber: 3002,
     commandLineArgs: args);
 
+using var reservationExpiryJob = new ReservationExpiryJob(EventAreaManagerCache.SingletonInstance);
+using var areaCapacityPublisher = new ActorNotificationPublisher(EventAreaManagerCache.SingletonInstance);
+
 app.Run();
+
