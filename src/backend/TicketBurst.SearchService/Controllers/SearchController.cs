@@ -123,6 +123,7 @@ public class SearchController : ControllerBase
         var areaSeatingMapWithStatus = GetAreaSeatingMapWithStatus(hallSeatingMap, hallStatusCache, areaId);
         var reply = new EventSearchAreaSeatingContract(
             Header: header,
+            PriceList: @event.PriceList,
             HallAreaId: areaId,
             HallAreaName: areaSeatingMapWithStatus.HallAreaName,
             AvailableCapacity: hallStatusCache.SeatingByAreaId[areaId].AvailableCapacity,
@@ -172,6 +173,8 @@ public class SearchController : ControllerBase
             EventStartTime: @event.EventStartUtc,
             DurationMinutes: @event.DurationMinutes,
             IsOpenForSale: @event.IsOpenForSale,
+            MinPrice: @event.PriceList.PriceByLevelId.Values.Min(),
+            MaxPrice: @event.PriceList.PriceByLevelId.Values.Max(),
             NumberOfSeatsLeft: numbrOfSeatsLeft);
 
         return result;
@@ -186,13 +189,18 @@ public class SearchController : ControllerBase
             MockDatabase.HallSeatingMaps.All.FirstOrDefault(m => m.Id == @event.HallSeatingMapId)
             ?? throw new InvalidDataException($"Hall seating map [{@event.HallSeatingMapId}] for event [{@event.Id}] not found");
 
-        var areaInfos = hallSeatingMap.Areas.Select(area => new EventSearchFullDetailContract.AreaInfo(
-            HallAreaId: area.HallAreaId,
-            Name: area.HallAreaName,
-            SeatingPlanImageUrl: area.PlanImageUrl,
-            TotalCapacity: area.Capacity,
-            AvailableCapacity: hallStatusCache.SeatingByAreaId[area.HallAreaId].AvailableCapacity
-        )).ToImmutableList();
+        var areaInfos = hallSeatingMap.Areas.Select(area => {
+            FindAreaPriceRange(@event.PriceList, area, out var minPrice, out var maxPrice);
+            return new EventSearchFullDetailContract.AreaInfo(
+                HallAreaId: area.HallAreaId,
+                Name: area.HallAreaName,
+                SeatingPlanImageUrl: area.PlanImageUrl,
+                TotalCapacity: area.Capacity,
+                AvailableCapacity: hallStatusCache.SeatingByAreaId[area.HallAreaId].AvailableCapacity,
+                MinPrice: minPrice,
+                MaxPrice: maxPrice
+            );
+        }).ToImmutableList();
 
         return new EventSearchFullDetailContract.HallInfo(
             SeatingPlanImageUrl: hallSeatingMap.PlanImageUrl,
@@ -200,6 +208,35 @@ public class SearchController : ControllerBase
             AvailableCapacity: hallStatusCache.AvailableCapacity,
             Areas: areaInfos
         );
+    }
+
+    private void FindAreaPriceRange(
+        EventPriceListContract priceList, 
+        AreaSeatingMapContract map, 
+        out decimal minPrice, 
+        out decimal maxPrice)
+    {
+        var seatsTemp  = map.Rows
+            .SelectMany(row => row.Seats)
+            .ToArray();
+
+        var badSeats = seatsTemp.Where(s => s.PriceLevelId == null).ToArray();
+        if (badSeats.Length > 0)
+        {
+            Console.WriteLine("BAD SEATS FOUND!");
+        }
+            
+        var pricesTemp = seatsTemp
+            .Select(seat => seat.PriceLevelId)
+            .ToArray();
+        
+        var prices = pricesTemp
+            .Distinct()
+            .Select(priceLevelId => priceList.PriceByLevelId[priceLevelId])
+            .ToArray();
+        
+        minPrice = prices.Min();
+        maxPrice = prices.Max();
     }
 
     private AreaSeatingMapContract GetAreaSeatingMapWithStatus(

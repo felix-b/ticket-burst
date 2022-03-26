@@ -63,4 +63,31 @@ public class NotificationController : ControllerBase
             return true;
         }
     }
+
+    [HttpPost("order-status-update")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(409)]
+    public async Task<ActionResult<ReplyContract<string>>> HandleOrderStatusUpdateNotification(
+        [FromBody] OrderStatusUpdateNotificationContract notification)
+    {
+        var order = notification.UpdatedOrder;
+        var eventId = order.Tickets[0].EventId;
+        var areaId = order.Tickets[0].HallAreaId;
+        
+        var actor = await EventAreaManagerCache.SingletonInstance.GetActor(eventId, areaId);
+        if (actor == null)
+        {
+            return ApiResult.Error(400, "EventAreaNotFound");
+        }
+
+        var success = actor.UpdateReservationPerOrderStatus(
+            order.ReservationId,
+            order.OrderNumber,
+            order.Status);
+            
+        return success
+            ? ApiResult.Success(200, "OK")
+            : ApiResult.Error(409, "ReservationJournalMismatch");
+    }
 }

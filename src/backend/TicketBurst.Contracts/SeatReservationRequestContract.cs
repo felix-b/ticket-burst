@@ -1,13 +1,22 @@
 ﻿using System;
+using System.Collections.Immutable;
 
 namespace TicketBurst.Contracts;
 
 public class SeatReservationRequestContract
 {
-    public string EventId { get; set; }
-    public string HallAreaId { get; set; }
-    public string[] SeatIds { get; set; }
-    public string? ClientContext { get; set; }
+    public SeatReservationRequestContract(string eventId, string hallAreaId, string[] seatIds, string? clientContext)
+    {
+        EventId = eventId;
+        HallAreaId = hallAreaId;
+        SeatIds = seatIds;
+        ClientContext = clientContext;
+    }
+
+    public string EventId { get; init; }
+    public string HallAreaId { get; init; }
+    public string[] SeatIds { get; init; }
+    public string? ClientContext { get; init; }
 }
 
 public record SeatReservationReplyContract(

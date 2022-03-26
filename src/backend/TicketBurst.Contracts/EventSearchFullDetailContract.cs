@@ -18,6 +18,8 @@ public record EventSearchFullDetailContract(
         string Name,
         string SeatingPlanImageUrl,
         int TotalCapacity,
-        int AvailableCapacity
+        int AvailableCapacity,
+        decimal MinPrice,
+        decimal MaxPrice
     );
 }

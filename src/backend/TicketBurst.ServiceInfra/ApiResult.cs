@@ -5,10 +5,10 @@ namespace TicketBurst.ServiceInfra;
 
 public static class ApiResult
 {
-    public static JsonResult Error(int statusCode)
+    public static JsonResult Error(int statusCode, string? reason = null)
     {
         var reply = new ReplyContract<string>(
-            Data: null, 
+            Data: reason, 
             ServiceProcessMetadata.GetCombinedInfo()
         );
 

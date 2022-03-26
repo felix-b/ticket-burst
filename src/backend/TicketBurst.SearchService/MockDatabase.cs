@@ -270,11 +270,11 @@ public static class MockDatabase
                 SaleStartUtc: DateTime.UtcNow.AddMinutes(1),
                 EventStartUtc: new DateTime(2022, 4, 12, 10, 30, 0, DateTimeKind.Local),
                 DurationMinutes: 180,
+                PriceList: MakePriceList(Venues.NeoQuimicaArena),
                 IsOpenForSale: false,
                 Title: $"{Troupes.Football.Brazil.Name} - {Troupes.Football.Colombia.Name}",
                 Description: string.Empty,
                 PosterImageUrl: string.Empty);
-
             
             public static readonly EventContract QuarterFinal2of4 = new(
                 Id: "d22508dd-dec2-4c25-b209-007bcdd3ae02",
@@ -287,6 +287,7 @@ public static class MockDatabase
                 SaleStartUtc: DateTime.UtcNow.AddMinutes(1),
                 EventStartUtc: new DateTime(2022, 4, 12, 10, 30, 0, DateTimeKind.Local),
                 DurationMinutes: 180,
+                PriceList: MakePriceList(Venues.EstadioGovernadorMagalhaesPinto),
                 IsOpenForSale: false,
                 Title: $"{Troupes.Football.SouthKorea.Name} - {Troupes.Football.Honduras.Name}",
                 Description: string.Empty,
@@ -303,6 +304,7 @@ public static class MockDatabase
                 SaleStartUtc: DateTime.UtcNow.AddMinutes(1),
                 EventStartUtc: new DateTime(2022, 4, 12, 10, 30, 0, DateTimeKind.Local),
                 DurationMinutes: 180,
+                PriceList: MakePriceList(Venues.ItaipavaArenaFonteNova),
                 IsOpenForSale: false,
                 Title: $"{Troupes.Football.Nigeria.Name} - {Troupes.Football.Denmark.Name}",
                 Description: string.Empty,
@@ -319,6 +321,7 @@ public static class MockDatabase
                 SaleStartUtc: DateTime.UtcNow.AddMinutes(1),
                 EventStartUtc: new DateTime(2022, 4, 12, 10, 30, 0, DateTimeKind.Local),
                 DurationMinutes: 180,
+                PriceList: MakePriceList(Venues.ArenaBRBManeGarrincha),
                 IsOpenForSale: false,
                 Title: $"{Troupes.Football.Portugal.Name} - {Troupes.Football.Germany.Name}",
                 Description: string.Empty,
@@ -335,6 +338,7 @@ public static class MockDatabase
                 SaleStartUtc: DateTime.UtcNow.AddMinutes(1),
                 EventStartUtc: new DateTime(2022, 4, 15, 10, 30, 0, DateTimeKind.Local),
                 DurationMinutes: 180,
+                PriceList: MakePriceList(Venues.EstadioJornalistaMarioFilho),
                 IsOpenForSale: false,
                 Title: string.Empty,
                 Description: string.Empty,
@@ -351,6 +355,7 @@ public static class MockDatabase
                 SaleStartUtc: DateTime.UtcNow.AddMinutes(1),
                 EventStartUtc: new DateTime(2022, 4, 15, 10, 30, 0, DateTimeKind.Local),
                 DurationMinutes: 180,
+                PriceList: MakePriceList(Venues.NeoQuimicaArena),
                 IsOpenForSale: false,
                 Title: string.Empty,
                 Description: string.Empty,
@@ -367,6 +372,7 @@ public static class MockDatabase
                 SaleStartUtc: DateTime.UtcNow.AddMinutes(1),
                 EventStartUtc: new DateTime(2022, 4, 20, 10, 30, 0, DateTimeKind.Local),
                 DurationMinutes: 180,
+                PriceList: MakePriceList(Venues.EstadioJornalistaMarioFilho),
                 IsOpenForSale: false,
                 Title: string.Empty,
                 Description: string.Empty,
@@ -383,6 +389,7 @@ public static class MockDatabase
                 SaleStartUtc: DateTime.UtcNow.AddMinutes(1),
                 EventStartUtc: new DateTime(2022, 4, 20, 10, 30, 0, DateTimeKind.Local),
                 DurationMinutes: 180,
+                PriceList: MakePriceList(Venues.EstadioGovernadorMagalhaesPinto),
                 IsOpenForSale: false,
                 Title: string.Empty,
                 Description: string.Empty,
@@ -413,6 +420,23 @@ public static class MockDatabase
                     ? e
                     : e with { IsOpenForSale = newValue })
                 .ToImmutableList();
+        }
+
+        private static EventPriceListContract MakePriceList(VenueContract venue)
+        {
+            var hall = venue.Halls[0];
+            var hallSeatingMap = HallSeatingMaps.All.First(map => map.Id == hall.DefaultSeatingMapId);
+            var priceLevels = hallSeatingMap.PriceLevels;
+            var price = (decimal)__random.Next(50, 100);
+            var builder = ImmutableDictionary.CreateBuilder<string, decimal>();
+
+            for (int i = 0; i < priceLevels.Count; i++)
+            {
+                builder[priceLevels[i].Id] = price;
+                price += __random.Next(50, 100);
+            }
+
+            return new EventPriceListContract(PriceByLevelId: builder.ToImmutable());
         }
     }
 
@@ -540,26 +564,37 @@ public static class MockDatabase
 
         HallSeatingMapContract CreateHallSeatingMap()
         {
-            var seatingMapId = MakeNewId(); 
+            var seatingMapId = MakeNewId();
+            var priceLevels = MakePriceLevels();
             return new HallSeatingMapContract(
                 Id: seatingMapId,
                 HallId: hallId,
                 Name: "Default",
                 Capacity: hallCapacity,
                 PlanImageUrl: string.Empty,
+                PriceLevels: priceLevels,
                 Areas: areaIds.Select((areaId, areaIndex) => CreateAreaSeatingMap(
                     seatingMapId,
                     areaId,
                     areaName: (areaIndex + 1).ToString(),
-                    areaCapacity: areaId == areaIds[^1] ? lastAreaCapacity : eachAreaCapacity
+                    areaCapacity: areaId == areaIds[^1] ? lastAreaCapacity : eachAreaCapacity,
+                    priceLevelIds: PickPriceLevelIds(priceLevels)
                 )).ToImmutableList()
             );
         }
-        
-        AreaSeatingMapContract CreateAreaSeatingMap(string seatingMapId, string areaId, string areaName, int areaCapacity)
+
+        AreaSeatingMapContract CreateAreaSeatingMap(
+            string seatingMapId, 
+            string areaId, 
+            string areaName, 
+            int areaCapacity,
+            string[] priceLevelIds)
         {
             var seatsInEachRow = 25;
             SplitCapacityIntoBoxes(areaCapacity, seatsInEachRow, out var rowCount, out var seatsInLastRow);
+
+            var midRowNum = rowCount / priceLevelIds.Length;
+            var priceLevelQuadrants = MakePriceLevelQuadrants(priceLevelIds);
             
             return new AreaSeatingMapContract(
                 SeatingMapId: seatingMapId,
@@ -567,23 +602,86 @@ public static class MockDatabase
                 HallAreaName: areaName,
                 Capacity: areaCapacity,
                 PlanImageUrl: string.Empty,
-                Rows: Enumerable.Range(1, rowCount).Select(rowNum => CreateAreaSeatingMapRow(
-                    rowNum, 
-                    rowNum < rowCount ? seatsInEachRow : seatsInLastRow
-                )).ToImmutableList() 
+                Rows: Enumerable.Range(1, rowCount).Select(rowNum => {
+                    var numSeatsInThisRow = rowNum < rowCount ? seatsInEachRow : seatsInLastRow;
+                    return CreateAreaSeatingMapRow(
+                        rowNum,
+                        numSeatsInThisRow,
+                        ConcatPriceLevelIds(rowNum, midRowNum, numSeatsInThisRow, priceLevelQuadrants)
+                    );
+                }).ToImmutableList() 
             );
         }
 
-        SeatingMapRowContract CreateAreaSeatingMapRow(int rowNum, int seatCount)
+        string[] PickPriceLevelIds(ImmutableList<PriceLevelContract> priceLevels)
         {
+            var firstIndex = __random.Next(100) % priceLevels.Count;
+            if (__random.Next(100) < 30)
+            {
+                return new[] { priceLevels[firstIndex].Id };
+            }
+
+            var secondIndex = (firstIndex + 1) % priceLevels.Count;
+            return new[] {
+                priceLevels[firstIndex].Id,
+                priceLevels[secondIndex].Id
+            };
+        }
+        
+        string[,] MakePriceLevelQuadrants(string[] priceLevelIds)
+        {
+            var dice = __random.Next(33);
+            if (priceLevelIds.Length == 1 || dice < 10)
+            {
+                return new string[,] {
+                    { priceLevelIds[0], priceLevelIds[0], priceLevelIds[0] },
+                    { priceLevelIds[0], priceLevelIds[0], priceLevelIds[0] },
+                };
+            }
+            else if (dice < 19)
+            {
+                return new string[,] {
+                    { priceLevelIds[0], priceLevelIds[0], priceLevelIds[0] },
+                    { priceLevelIds[1], priceLevelIds[1], priceLevelIds[1] },
+                };
+            }
+            else 
+            {
+                return new string[,] {
+                    { priceLevelIds[1], priceLevelIds[0], priceLevelIds[1] },
+                    { priceLevelIds[1], priceLevelIds[1], priceLevelIds[1] },
+                };
+            }
+        }
+
+        IEnumerable<string> ConcatPriceLevelIds(int rowIndex, int midRowIndex, int numSeatsInRow, string[,] quadrants)
+        {
+            var quadrantRow = rowIndex < midRowIndex ? 0 : 1;
+            return Enumerable.Repeat(quadrants[quadrantRow, 0], 5)
+                .Concat(Enumerable.Repeat(quadrants[quadrantRow, 1], numSeatsInRow - 10))
+                .Concat(Enumerable.Repeat(quadrants[quadrantRow, 2], 5));
+        }
+
+        SeatingMapRowContract CreateAreaSeatingMapRow(int rowNum, int seatCount, IEnumerable<string> priceLevelIds)
+        {
+            using var priceLevelIdEnumerator = priceLevelIds.GetEnumerator();
+            
             return new SeatingMapRowContract(
                 Id: MakeNewId(),
                 Name: rowNum.ToString(),
                 Seats: Enumerable.Range(1, seatCount).Select(seatNum => new SeatingMapSeatContract(
                     Id: MakeNewId(),
-                    seatNum.ToString()
+                    Name: seatNum.ToString(),
+                    // ReSharper disable once AccessToDisposedClosure
+                    PriceLevelId: TakeNext(priceLevelIdEnumerator)
                 )).ToImmutableList()
             );
+        }
+
+        T TakeNext<T>(IEnumerator<T> enumerator)
+        {
+            enumerator.MoveNext();
+            return enumerator.Current;
         }
 
         static void SplitCapacityIntoBoxes(
@@ -597,8 +695,19 @@ public static class MockDatabase
                 ? eachBoxCapacity + (totalCapacity % eachBoxCapacity)
                 : eachBoxCapacity;
         }
+
+        static ImmutableList<PriceLevelContract> MakePriceLevels()
+        {
+            return new[] {
+                new PriceLevelContract(MakeNewId(), "A", "0693e3"),
+                new PriceLevelContract(MakeNewId(), "B", "fcb900"),
+                new PriceLevelContract(MakeNewId(), "C", "9b51e0"),
+            }.ToImmutableList();
+        }
     }
 
+    private static readonly Random __random = new Random(123456);
+    
     public static string MakeNewId()
     {
         return Guid.NewGuid().ToString("d");
@@ -609,3 +718,4 @@ public static class MockDatabase
         return ImmutableList<T>.Empty.AddRange(items);
     }
 }
+

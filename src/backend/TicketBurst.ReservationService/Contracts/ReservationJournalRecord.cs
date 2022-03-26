@@ -12,7 +12,8 @@ public record ReservationJournalRecord(
     ulong SequenceNo,
     ImmutableList<string> SeatIds,
     ReservationAction Action,
-    SeatStatus ResultStatus
+    SeatStatus ResultStatus,
+    uint? OrderNumber = null
 );
 
 public enum ReservationAction
@@ -23,4 +24,3 @@ public enum ReservationAction
     ReleasePerTimeout = 3,
     ReleasePerOrderCanceled = 4,
 }
-

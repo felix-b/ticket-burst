@@ -12,6 +12,7 @@ public record EventContract(
     string ShowId,
     DateTime SaleStartUtc,
     DateTime EventStartUtc,
+    EventPriceListContract PriceList,
     bool IsOpenForSale,
     int DurationMinutes,
     string? Title = null,

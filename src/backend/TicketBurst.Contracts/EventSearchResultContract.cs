@@ -26,6 +26,8 @@ public record EventSearchResultContract(
     DateTimeOffset SaleStartTime,
     DateTimeOffset EventStartTime,
     int DurationMinutes,
+    decimal MinPrice,
+    decimal MaxPrice,
     bool IsOpenForSale,
     int NumberOfSeatsLeft
 );

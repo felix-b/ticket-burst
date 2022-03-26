@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using TicketBurst.Contracts;
 using TicketBurst.ReservationService.Contracts;
 
 namespace TicketBurst.ReservationService;

@@ -10,7 +10,7 @@ public class EventAreaManager
 {
     public const int TemporaryReservationExpiryMinutes = 7;
     
-    private readonly object _syncRoot = new();
+    private readonly object _syncRoot = new(); //TODO: get rid once integrated with actor framework
     private ImmutableDictionary<string, SeatEntry> _seatById = ImmutableDictionary<string, SeatEntry>.Empty;
     private string _seatingMapId = string.Empty;
     private ulong _lastJournalSequenceNo = 1;
@@ -153,6 +153,49 @@ public class EventAreaManager
                 Console.WriteLine($"EAM[{EventId}/{AreaId}]: seat[{entry.Seat.Id}] temporary reservation expired, released.");
             });
         }
+    }
+
+    public ReservationJournalRecord? FindEffectiveJournalRecordById(string reservationId)
+    {
+        lock (_syncRoot)
+        {
+            foreach (var seat in _seatById.Values)
+            {
+                if (seat.LastRecord?.Id == reservationId)
+                {
+                    return seat.LastRecord;
+                }
+            }
+
+            return null;
+        }
+    }
+
+    public bool UpdateReservationPerOrderStatus(string reservationId, uint orderNumber, OrderStatus orderStatus)
+    {
+        var effectiveRecord = FindEffectiveJournalRecordById(reservationId);
+        if (effectiveRecord == null || 
+            effectiveRecord.Action != ReservationAction.TemporarilyReserve || 
+            effectiveRecord.ResultStatus != SeatStatus.Reserved)
+        {
+            return false;
+        }
+
+        var newRecord = effectiveRecord with {
+            Id = MockDatabase.MakeNewId(),
+            SequenceNo = Interlocked.Increment(ref _lastJournalSequenceNo),
+            CreatedAtUtc = DateTime.UtcNow,
+            OrderNumber = orderNumber,
+            Action = orderStatus == OrderStatus.Completed  
+                ? ReservationAction.PermanentlyReservePerOrderCompleted
+                : ReservationAction.ReleasePerOrderCanceled,
+            ResultStatus = orderStatus == OrderStatus.Completed  
+                ? SeatStatus.Sold
+                : SeatStatus.Available
+        };
+        
+        ApplyJournalRecord(newRecord);
+        return true;
     }
     
     public string EventId { get; }

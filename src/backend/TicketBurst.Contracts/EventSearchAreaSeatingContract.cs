@@ -5,5 +5,6 @@ public record EventSearchAreaSeatingContract(
     string HallAreaId,
     string HallAreaName,
     int AvailableCapacity,
+    EventPriceListContract PriceList,
     AreaSeatingMapContract SeatingMap
 );

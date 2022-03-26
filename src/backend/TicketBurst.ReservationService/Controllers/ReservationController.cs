@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 using TicketBurst.Contracts;
 using TicketBurst.ReservationService.Actors;
+using TicketBurst.ReservationService.Contracts;
 using TicketBurst.ServiceInfra;
 
 namespace TicketBurst.ReservationService.Controllers;
@@ -56,6 +57,41 @@ public class ReservationController : ControllerBase
                 request.SeatIds.Length > 0 &&
                 !request.SeatIds.Any(string.IsNullOrWhiteSpace));
         }
+    }
+
+    [HttpGet("retrieve/{eventId}/{areaId}/{reservationId}")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(404)]
+    public async Task<ActionResult<ReplyContract<ReservationInfoContract>>> RetrieveReservation(
+        string eventId,
+        string areaId,
+        string reservationId)
+    {
+        if (string.IsNullOrWhiteSpace(eventId) || string.IsNullOrWhiteSpace(areaId) ||
+            string.IsNullOrWhiteSpace(reservationId))
+        {
+            return ApiResult.Error(400);
+        }
+        
+        var actor = await EventAreaManagerCache.SingletonInstance.GetActor(eventId, areaId);
+        if (actor == null)
+        {
+            return ApiResult.Error(400);
+        }
+
+        ReservationJournalRecord? record = actor.FindEffectiveJournalRecordById(reservationId);
+        if (record == null)
+        {
+            return ApiResult.Error(404);
+        }
+
+        var info = new ReservationInfoContract(
+            Id: record.Id,
+            EventId: record.EventId,
+            HallAreaId: record.HallAreaId,
+            SeatIds: record.SeatIds);
+        return ApiResult.Success(200, info);
     }
 
     private SeatReservationReplyContract? EncryptCheckoutToken(SeatReservationReplyContract? reply)
