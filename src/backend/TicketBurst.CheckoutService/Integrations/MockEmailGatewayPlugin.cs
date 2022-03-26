@@ -18,7 +18,8 @@ public class MockEmailGatewayPlugin : IEmailGatewayPlugin
 
     public async Task SendEmailMessage(MimeMessage message)
     {
-        var fileName = $"{DateTime.UtcNow:yyyyMMdd-HHmmss-fffff}.txt";
+        var toAddress = message.To.OfType<MailboxAddress>().First();
+        var fileName = $"{DateTime.UtcNow:yyyyMMdd-HHmmss-fffff}__{toAddress.Address}.txt";
         var filePath = Path.Combine(__outboxFolderPath, fileName);
 
         await using var file = File.Create(filePath);

@@ -78,7 +78,7 @@ public class MockPaymentGatewayPlugin : IPaymentGatewayPlugin
     public void NotifyPaymentMethodReceived(string paymentToken)
     {
         Task.Factory.StartNew(async () => {
-            await Task.Delay(TimeSpan.FromSeconds(30));
+            await Task.Delay(TimeSpan.FromSeconds(20));
             await ServiceClient.HttpPostJson<string>(
                 ServiceName.Checkout,
                 path: new[] { "notify", "payment" },

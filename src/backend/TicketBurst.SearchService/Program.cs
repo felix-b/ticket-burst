@@ -13,7 +13,7 @@ using var saleNotificationPublisher = new InProcessMessagePublisher<EventSaleNot
     receiverServiceName: ServiceName.Reservation,
     urlPath: new[] { "notify", "event-sale" });
 
-//using var saleStatusUpdateJob = new EventSaleStatusUpdateJob(saleNotificationPublisher);
+using var saleStatusUpdateJob = new EventSaleStatusUpdateJob(saleNotificationPublisher);
 
 var httpEndpoint = ServiceBootstrap.CreateHttpEndpoint(
     serviceName: "ticketburst-services-search",
