@@ -86,6 +86,15 @@ public static class ServiceClient
         Console.WriteLine($"HTTP response {(int)response.StatusCode} {response.StatusCode}");
         if (response.StatusCode != HttpStatusCode.OK)
         {
+            try
+            {
+                var reason = await response.Content.ReadAsAsync<ReplyContract<string>>();
+                Console.WriteLine($"> reason [{reason}]");
+            }
+            // ReSharper disable once EmptyGeneralCatchClause
+            catch
+            {
+            }
             return null;
         }
 

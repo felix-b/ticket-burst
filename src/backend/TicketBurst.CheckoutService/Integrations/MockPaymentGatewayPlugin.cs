@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Security.Cryptography;
+using System.Text.Json;
 using Microsoft.AspNetCore.DataProtection;
 using TicketBurst.Contracts;
 using TicketBurst.ServiceInfra;
@@ -48,11 +49,15 @@ public class MockPaymentGatewayPlugin : IPaymentGatewayPlugin
         // out string hallAreaId, 
         // out string reservationId)
     {
-        paymentToken = body;
+        paymentToken = body.StartsWith('"') && body.EndsWith('"')
+            ? body.Substring(1, body.Length - 2)
+            : body;
 
+        Console.WriteLine($"MockPaymentGatewayPlugin> ParsePaymentNotification> paymentToken [{paymentToken}]");
+        
         try
         {
-            var json = _dataProtector.Unprotect(body);
+            var json = _dataProtector.Unprotect(paymentToken);
             var data = JsonSerializer.Deserialize<PaymentData>(json);
             orderNumber = data!.OrderNumber;
             orderStatus = data.NotificationStatus == "OK" 
@@ -85,6 +90,14 @@ public class MockPaymentGatewayPlugin : IPaymentGatewayPlugin
                 body: paymentToken);
         }, TaskCreationOptions.LongRunning);
     }
+
+    public PaymentData DecryptPaymentToken(string paymentToken)
+    {
+        var json = _dataProtector.Unprotect(paymentToken);
+        var data = JsonSerializer.Deserialize<PaymentData>(json);
+        return data ?? throw new CryptographicException("Failed to decrypt payment token");
+    }
+    
     //
     // public PaymentData? DecryptPaymentToken(string token)
     // {

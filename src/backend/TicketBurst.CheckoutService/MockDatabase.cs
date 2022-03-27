@@ -1,4 +1,5 @@
 ﻿#pragma warning disable CS1998
+// ReSharper disable InconsistentlySynchronizedField
 
 using System.Collections.Immutable;
 using TicketBurst.Contracts;
@@ -24,9 +25,13 @@ public static class MockDatabase
         private static readonly object __syncRoot = new();
         private static ImmutableDictionary<uint, OrderContract> __orderByNumber = ImmutableDictionary<uint, OrderContract>.Empty;
 
+        public static IEnumerable<OrderContract> GetTop(int count)
+        {
+            return __orderByNumber.Values.Take(count);
+        }
+
         public static async Task<OrderContract?> TryGetByNumber(uint orderNumber)
         {
-            // ReSharper disable once InconsistentlySynchronizedField
             if (__orderByNumber.TryGetValue(orderNumber, out var order))
             {
                 return order;

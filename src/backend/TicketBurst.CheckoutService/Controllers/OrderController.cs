@@ -20,6 +20,14 @@ public class OrderController : ControllerBase
     {
         _statusUpdatePublisher = statusUpdatePublisher;
     }
+    
+    [HttpGet]
+    [ProducesResponseType(200)]
+    public ActionResult<ReplyContract<IEnumerable<OrderContract>>> Get()
+    {
+        var data = MockDatabase.Orders.GetTop(20);
+        return ApiResult.Success(200, data);
+    }
 
     [HttpPost("update-status")]
     [ProducesResponseType(200)]

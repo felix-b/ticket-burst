@@ -1,5 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,7 +26,9 @@ public static class ServiceBootstrap
             options.SerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.Always;
         });
 
-        builder.Services.AddDataProtection();
+        builder.Services.AddDataProtection()
+            .SetApplicationName("ticketburst")
+            .DisableAutomaticKeyGeneration();
         
         configure?.Invoke(builder);
         

@@ -7,12 +7,14 @@ public record EventAreaUpdateNotificationContract(
     string Id,
     ulong SequenceNo,
     DateTime PublishedAtUtc,
-    string EventId, 
+    string EventId,
     string HallAreaId,
     int TotalCapacity,
     int AvailableCapacity,
-    ImmutableDictionary<string, SeatStatus> StatusBySeatId
-);
+    ImmutableDictionary<string, SeatStatus> StatusBySeatId)
+{
+    public override string ToString() => $"{EventId}/{HallAreaId}#{SequenceNo}";
+}
 
 public enum SeatStatus
 {

@@ -8,5 +8,7 @@ public record EventSaleNotificationContract(
     DateTime PublishedAtUtc,
     string EventId,
     ImmutableList<string> HallAreaIds,
-    DateTime SaleStartUtc
-);
+    DateTime SaleStartUtc)
+{
+    public override string ToString() => $"{EventId}:${SaleStartUtc.ToString("yyyyMMdd-HHmmss")}";
+}

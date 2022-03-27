@@ -257,6 +257,8 @@ public static class MockDatabase
 
     public static class Events
     {
+        public static readonly TimeSpan TimeToOpenSale = TimeSpan.FromSeconds(10);
+        
         public static class Football
         {
             public static readonly EventContract QuarterFinal1of4 = new(
@@ -267,7 +269,7 @@ public static class MockDatabase
                 VenueId: Venues.NeoQuimicaArena.Id,
                 HallId: Venues.NeoQuimicaArena.Halls[0].Id,
                 HallSeatingMapId: Venues.NeoQuimicaArena.Halls[0].DefaultSeatingMapId,
-                SaleStartUtc: DateTime.UtcNow.AddMinutes(1),
+                SaleStartUtc: DateTime.UtcNow.Add(TimeToOpenSale),
                 EventStartUtc: new DateTime(2022, 4, 12, 10, 30, 0, DateTimeKind.Local),
                 DurationMinutes: 180,
                 PriceList: MakePriceList(Venues.NeoQuimicaArena),
@@ -284,7 +286,7 @@ public static class MockDatabase
                 VenueId: Venues.EstadioGovernadorMagalhaesPinto.Id,
                 HallId: Venues.EstadioGovernadorMagalhaesPinto.Halls[0].Id,
                 HallSeatingMapId: Venues.EstadioGovernadorMagalhaesPinto.Halls[0].DefaultSeatingMapId,
-                SaleStartUtc: DateTime.UtcNow.AddMinutes(1),
+                SaleStartUtc: DateTime.UtcNow.Add(TimeToOpenSale),
                 EventStartUtc: new DateTime(2022, 4, 12, 10, 30, 0, DateTimeKind.Local),
                 DurationMinutes: 180,
                 PriceList: MakePriceList(Venues.EstadioGovernadorMagalhaesPinto),
@@ -301,7 +303,7 @@ public static class MockDatabase
                 VenueId: Venues.ItaipavaArenaFonteNova.Id,
                 HallId: Venues.ItaipavaArenaFonteNova.Halls[0].Id,
                 HallSeatingMapId: Venues.ItaipavaArenaFonteNova.Halls[0].DefaultSeatingMapId,
-                SaleStartUtc: DateTime.UtcNow.AddMinutes(1),
+                SaleStartUtc: DateTime.UtcNow.Add(TimeToOpenSale),
                 EventStartUtc: new DateTime(2022, 4, 12, 10, 30, 0, DateTimeKind.Local),
                 DurationMinutes: 180,
                 PriceList: MakePriceList(Venues.ItaipavaArenaFonteNova),
@@ -318,7 +320,7 @@ public static class MockDatabase
                 VenueId: Venues.ArenaBRBManeGarrincha.Id,
                 HallId: Venues.ArenaBRBManeGarrincha.Halls[0].Id,
                 HallSeatingMapId: Venues.ArenaBRBManeGarrincha.Halls[0].DefaultSeatingMapId,
-                SaleStartUtc: DateTime.UtcNow.AddMinutes(1),
+                SaleStartUtc: DateTime.UtcNow.Add(TimeToOpenSale),
                 EventStartUtc: new DateTime(2022, 4, 12, 10, 30, 0, DateTimeKind.Local),
                 DurationMinutes: 180,
                 PriceList: MakePriceList(Venues.ArenaBRBManeGarrincha),
@@ -335,7 +337,7 @@ public static class MockDatabase
                 VenueId: Venues.EstadioJornalistaMarioFilho.Id,
                 HallId: Venues.EstadioJornalistaMarioFilho.Halls[0].Id,
                 HallSeatingMapId: Venues.EstadioJornalistaMarioFilho.Halls[0].DefaultSeatingMapId,
-                SaleStartUtc: DateTime.UtcNow.AddMinutes(1),
+                SaleStartUtc: DateTime.UtcNow.Add(TimeToOpenSale),
                 EventStartUtc: new DateTime(2022, 4, 15, 10, 30, 0, DateTimeKind.Local),
                 DurationMinutes: 180,
                 PriceList: MakePriceList(Venues.EstadioJornalistaMarioFilho),
@@ -352,7 +354,7 @@ public static class MockDatabase
                 VenueId: Venues.NeoQuimicaArena.Id,
                 HallId: Venues.NeoQuimicaArena.Halls[0].Id,
                 HallSeatingMapId: Venues.NeoQuimicaArena.Halls[0].DefaultSeatingMapId,
-                SaleStartUtc: DateTime.UtcNow.AddMinutes(1),
+                SaleStartUtc: DateTime.UtcNow.Add(TimeToOpenSale),
                 EventStartUtc: new DateTime(2022, 4, 15, 10, 30, 0, DateTimeKind.Local),
                 DurationMinutes: 180,
                 PriceList: MakePriceList(Venues.NeoQuimicaArena),
@@ -369,7 +371,7 @@ public static class MockDatabase
                 VenueId: Venues.EstadioJornalistaMarioFilho.Id,
                 HallId: Venues.EstadioJornalistaMarioFilho.Halls[0].Id,
                 HallSeatingMapId: Venues.EstadioJornalistaMarioFilho.Halls[0].DefaultSeatingMapId,
-                SaleStartUtc: DateTime.UtcNow.AddMinutes(1),
+                SaleStartUtc: DateTime.UtcNow.Add(TimeToOpenSale),
                 EventStartUtc: new DateTime(2022, 4, 20, 10, 30, 0, DateTimeKind.Local),
                 DurationMinutes: 180,
                 PriceList: MakePriceList(Venues.EstadioJornalistaMarioFilho),
@@ -386,7 +388,7 @@ public static class MockDatabase
                 VenueId: Venues.EstadioGovernadorMagalhaesPinto.Id,
                 HallId: Venues.EstadioGovernadorMagalhaesPinto.Halls[0].Id,
                 HallSeatingMapId: Venues.EstadioGovernadorMagalhaesPinto.Halls[0].DefaultSeatingMapId,
-                SaleStartUtc: DateTime.UtcNow.AddMinutes(1),
+                SaleStartUtc: DateTime.UtcNow.Add(TimeToOpenSale),
                 EventStartUtc: new DateTime(2022, 4, 20, 10, 30, 0, DateTimeKind.Local),
                 DurationMinutes: 180,
                 PriceList: MakePriceList(Venues.EstadioGovernadorMagalhaesPinto),

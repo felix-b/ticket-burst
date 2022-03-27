@@ -26,6 +26,8 @@ public class NotificationController : ControllerBase
         using var reader = new StreamReader(Request.Body, Encoding.UTF8);
         var bodyAsString = await reader.ReadToEndAsync();
         
+        Console.WriteLine($"NotificationController> HandlePaymentNotification> bodyAsString [{bodyAsString}]");
+        
         if (!_paymentPlugin.ParsePaymentNotification(
             bodyAsString, 
             out var paymentToken,

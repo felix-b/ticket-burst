@@ -150,8 +150,8 @@ public class TicketBuyerScenarioTests
                 seatIds: seats.Select(s => s.Id).ToArray(),
                 clientContext: null);
             var reservationReply = await ServiceClient.HttpPostJson<SeatReservationReplyContract>(
-                ServiceName.Search,
-                path: new[] { "search", "reservation", "grab" },
+                ServiceName.Reservation,
+                path: new[] { "reservation", "grab" },
                 body: request);
 
             reservationReply.Should().NotBeNull();
@@ -209,6 +209,8 @@ public class TicketBuyerScenarioTests
                 {
                     return pickedResult;
                 }
+
+                await Task.Delay(TimeSpan.FromSeconds(3));
             }
             
             throw new AssertionFailedException("Event was not open for sale");
