@@ -52,6 +52,11 @@ public class SearchController : ControllerBase
         {
             var query = MockDatabase.Events.All.AsQueryable();
 
+            if (request.Selling == true)
+            {
+                query = query.OrderByDescending(e => e.IsOpenForSale);
+            }
+
             if (!string.IsNullOrWhiteSpace(request.Id))
             {
                 query = query.Where(e => e.Id == request.Id);
@@ -67,12 +72,7 @@ public class SearchController : ControllerBase
                 query = query.Where(e => e.EventStartUtc < request.ToDate.Value.Date.AddDays(1));
             }
 
-            if (request.Selling.HasValue)
-            {
-                query = query.Where(e => e.IsOpenForSale == request.Selling.Value);
-            }
-            
-            return query;
+            return query.OrderBy(e => e.EventStartUtc);
         }
     }
     
@@ -92,7 +92,8 @@ public class SearchController : ControllerBase
         var hallInfo = GetFullDetailHallInfo(@event, hallStatusCache, out _);
         var fullDetail = new EventSearchFullDetailContract(
             Event: enrichedEvent,
-            Hall: hallInfo);
+            Hall: hallInfo,
+            PriceList: @event.PriceList);
 
         return ApiResult.Success(200, fullDetail);
     }
@@ -118,12 +119,13 @@ public class SearchController : ControllerBase
         var hallInfo = GetFullDetailHallInfo(@event, hallStatusCache, out var hallSeatingMap);
         var header = new EventSearchFullDetailContract(
             Event: enrichedEvent,
-            Hall: hallInfo);
+            Hall: hallInfo,
+            PriceList: @event.PriceList);
 
         var areaSeatingMapWithStatus = GetAreaSeatingMapWithStatus(hallSeatingMap, hallStatusCache, areaId);
         var reply = new EventSearchAreaSeatingContract(
             Header: header,
-            PriceList: @event.PriceList,
+            PriceLevels: hallSeatingMap.PriceLevels,
             HallAreaId: areaId,
             HallAreaName: areaSeatingMapWithStatus.HallAreaName,
             AvailableCapacity: hallStatusCache.SeatingByAreaId[areaId].AvailableCapacity,
@@ -206,7 +208,8 @@ public class SearchController : ControllerBase
             SeatingPlanImageUrl: hallSeatingMap.PlanImageUrl,
             TotalCapacity: hallSeatingMap.Capacity,
             AvailableCapacity: hallStatusCache.AvailableCapacity,
-            Areas: areaInfos
+            Areas: areaInfos,
+            PriceLevels: hallSeatingMap.PriceLevels
         );
     }
 
