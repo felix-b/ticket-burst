@@ -1,53 +1,35 @@
-import React, { useEffect } from 'react'
-import { Box, Center, Flex, Grid, GridItem, HStack, Spacer, Image, Img, AspectRatio, Stack, Text, Button, Tag, TagLabel, Stat, StatLabel, StatNumber, StatHelpText, StatGroup } from "@chakra-ui/react"
+import React from 'react'
+import { Box, Center, Flex, Grid, GridItem, } from "@chakra-ui/react"
 
-const IndexPage = () => {
+import { HeaderBar } from '../components/headerBar'
+import { HeroEventCard } from '../components/heroEventCard'
+import { EventSearchResult } from '../contracts/backendApi'
+import { Utility } from '../utility'
+import { EventCard } from '../components/eventCard'
+import { EventSearchForm } from '../components/eventSearchForm'
 
-    const headerRef = React.useRef<HTMLDivElement>(null);
-    /*
-    function handleWindowScroll() {
-        if (document.body.scrollTop > 5 || document.documentElement.scrollTop > 5) {
-            //headerRef.current.style.height = '70px';
-            headerRef.current.style.backgroundColor = 'var(--chakra-colors-green-600)';
-        } else {
-            //headerRef.current.style.height = '100px';
-            headerRef.current.style.backgroundColor = 'var(--chakra-colors-blue-800)';
+interface IndexPageProps {
+    events: EventSearchResult[]
+}
+
+const IndexPage = (props: IndexPageProps) => {
+
+    const events = props.events.map(Utility.eventSearchResultToCardProps);
+    const allCardsRendered: JSX.Element[] = [0,1,2,3,4,5,6,7,8].map(index => {
+        switch (index) {
+            case 0: return events.length > 1 
+                ? <EventCard key={index} {...events[1]} />
+                : null
+            case 1: return <EventSearchForm key={index} />
+            default: return index < events.length ? 
+                <EventCard key={index} {...events[index]} /> 
+                : null
         }
-    }
-    
-    useEffect(() => {
-        window.addEventListener('scroll', handleWindowScroll);
-        return function cleanup() {
-            window.removeEventListener('scroll', handleWindowScroll);
-        };
-    });
-    */
+    })
 
     return (
         <>
-            <Flex as="header" 
-                ref={headerRef} 
-                position="fixed" 
-                w="100%" 
-                h="100px" 
-                justifyContent={'center'}
-                backgroundColor="green.600" 
-                style={{transition: '0.2s', zIndex: 1000}}
-            >
-                <Flex direction={'row'} w={1200} h="100%" alignItems={'center'}>
-                    <Box>
-
-                    </Box>
-                    <Spacer />
-                    <Box>
-                        <Text color='white' textAlign={'center'} fontSize='5xl' fontWeight={900}>Summer Olympic Games 2024</Text>
-                    </Box>
-                    <Spacer />
-                    <Box>
-
-                    </Box>
-                </Flex>
-            </Flex>
+            <HeaderBar />
             <Grid 
                 minH="100vh"
                 bg="white" 
@@ -57,56 +39,15 @@ const IndexPage = () => {
                 <GridItem  colSpan={3} bg="blue.800" pt="100px" >
                     <Center>
                         <Box w={1200}  mt='40px'>
-                            <Stack w="100%" spacing={0} alignContent='center' color='white' justifyItems={'center'}>
-                                <Text textAlign={'center'} fontSize='3xl' fontWeight={'bold'} >21 August 2024</Text>
-                                <Text textAlign={'center'} fontSize='5xl' fontWeight={'bold'} >Brazil - Germany</Text>
-                                <Text textAlign={'center'} fontSize='2xl' fontWeight={'bold'} >$110 - $220</Text>
-                                <Box>
-                                    <Center>
-                                        <Button mt='20px' mb='20px' colorScheme='red' size='lg' fontWeight={'bold'} fontSize='2xl' minW='300px' h='60px'>
-                                            Grab Your Seats
-                                            <Tag size={'sm'} borderRadius='full' variant='solid' colorScheme='purple' ml='10px'>
-                                                <TagLabel fontSize={'sm'}>92 left</TagLabel>
-                                            </Tag>                                            
-                                        </Button>
-                                    </Center>
-                                </Box>
-                                <Text textAlign={'center'} fontSize='4xl' fontWeight={'bold'} >Football 1/4 Final</Text>
-                                <Text textAlign={'center'} fontSize='4xl' >Arena BRB Mane Garrincha</Text>
-                            </Stack>
+                            {events[0] && <HeroEventCard {...events[0]} />}
                         </Box>
                     </Center>
                 </GridItem>
                 <GridItem  h="full"></GridItem>
-                <GridItem  h="full" minH={2000}>
-
-                    <Flex gap='10px' mt='40px'>
-                        <StatGroup w='370px' border={'1px solid lightgray'} p={4} borderRadius={'xl'}>
-                            <Stat>
-                                <StatLabel>Collected Fees</StatLabel>
-                                <StatNumber>£0.00</StatNumber>
-                                <StatHelpText>Feb 12 - Feb 28</StatHelpText>
-                            </Stat>
-                        </StatGroup>
-                        <Spacer/>
-                        <StatGroup w='370px' border={'1px solid lightgray'} p={4} borderRadius={'xl'}>
-                            <Stat>
-                                <StatLabel>Collected Fees</StatLabel>
-                                <StatNumber>£0.00</StatNumber>
-                                <StatHelpText>Feb 12 - Feb 28</StatHelpText>
-                            </Stat>
-                        </StatGroup>
-                        <Spacer/>
-                        <StatGroup w='370px' border={'1px solid lightgray'} p={4} borderRadius={'xl'}>
-                            <Stat>
-                                <StatLabel>Collected Fees</StatLabel>
-                                <StatNumber>£0.00</StatNumber>
-                                <StatHelpText>Feb 12 - Feb 28</StatHelpText>
-                            </Stat>
-                        </StatGroup>
-
+                <GridItem  h="full" minH={1000}>
+                    <Flex mt='40px' wrap='wrap' justify='space-between' gap='40px'>
+                        {allCardsRendered}
                     </Flex>
-                    
                 </GridItem>
                 <GridItem  h="full"></GridItem>
             </Grid>  
@@ -115,3 +56,23 @@ const IndexPage = () => {
 }
 
 export default IndexPage
+
+export async function getServerSideProps(): Promise<{ props: IndexPageProps }> {
+    try {
+        const res = await fetch(`http://localhost:3001/search?selling=true&count=9`)
+        const envelope = await res.json()
+        const events = envelope.data as EventSearchResult[]
+        return { 
+            props: { 
+                events 
+            }
+        }
+    } catch(err) {
+        console.log(err)
+        return { 
+            props: {
+                events: []
+            }
+        }
+    }
+}

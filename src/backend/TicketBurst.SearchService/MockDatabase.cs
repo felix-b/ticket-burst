@@ -119,7 +119,7 @@ public static class MockDatabase
             #region Records
             
             public static readonly ShowContract QuarterFinal = new(
-                Id: "d8deb62d-6ada-410c-9016-45c0480d06cc",
+                Id: "8f75f4e7-7391-4158-8db9-e370c0bfe2e3",
                 ShowTypeId: ShowTypes.Match.Id,
                 GenreId: Genres.Football.Id,
                 TroupeIds: null,
@@ -237,8 +237,7 @@ public static class MockDatabase
             Football.Denmark,
             Football.Honduras,
             Football.Portugal,
-            Football.Germany,
-            Football.Brazil
+            Football.Germany
             
             #endregion
         );

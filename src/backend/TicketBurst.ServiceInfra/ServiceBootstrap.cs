@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Net.Http.Headers;
 using Microsoft.OpenApi.Models;
 
 namespace TicketBurst.ServiceInfra;
@@ -30,6 +31,12 @@ public static class ServiceBootstrap
             .SetApplicationName("ticketburst")
             .DisableAutomaticKeyGeneration();
         
+        builder.Services.AddCors(options => {
+            options.AddPolicy(name: "the_cors_policy", builder => builder
+                .WithOrigins("http://localhost:3000", "http://www.ticketburst.io")
+                .WithHeaders(HeaderNames.ContentType, HeaderNames.Referer));
+        });
+        
         configure?.Invoke(builder);
         
         builder.Services.AddControllers();
@@ -47,6 +54,8 @@ public static class ServiceBootstrap
 
         var app = builder.Build();
 
+        app.UseCors("the_cors_policy");
+        
         // Configure the HTTP request pipeline.
         app.UseSwagger();
         app.UseSwaggerUI();

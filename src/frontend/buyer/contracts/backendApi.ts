@@ -108,3 +108,66 @@ export interface EventSearchAreaFullDetail {
     priceLevels: PriceLevel[];
     seatingMap: AreaSeatingMap;
 }
+
+export interface GrabSeatsRequest {
+    eventId: string;
+    hallAreaId: string;
+    seatIds: string[];
+    clientContext?: string;
+}
+
+export interface GrabSeatsReply {
+    request: GrabSeatsRequest;
+    success: boolean;
+    checkoutToken?: string;
+    reservationExpiryUtc?: string;
+    errorCode?: string;
+    errorText?: string;
+}
+
+export interface TicketContract {
+    id: string;
+    eventId: string;
+    hallAreaId: string;
+    rowId: string;
+    seatId: string;
+    priceLevelId: string;
+    venueName: string;
+    venueAddress: string;
+    showTitle: string;
+    eventTitle: string;
+    hallName: string;
+    areaName: string;
+    rowName: string;
+    seatName: string;
+    startLocalTime: string;
+    durationMinutes: number;
+    priceLevelName: string;
+    price: number;
+}
+
+export interface OrderContract {
+    orderNumber: number;
+    status: number;
+    orderDescription: string;
+    createdAtUtc: string;
+    customerName: string;
+    customerEmail: string;
+    tickets: TicketContract[];
+    paymentCurrency: string;
+    paymentSubtotal: number;
+    paymentTax: number;
+    paymentTotal: number;
+    paymentToken?: string;
+    paymentReceivedUtc?: string;
+    ticketsShippedUtc?: string;
+}
+
+export interface BeginCheckoutRequest {
+    preview: boolean;
+    eventId: string;
+    hallAreaId: string;
+    checkoutToken: string;
+    customerName?: string;
+    customerEmail?: string;
+}

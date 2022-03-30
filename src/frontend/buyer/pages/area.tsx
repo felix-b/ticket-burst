@@ -1,13 +1,14 @@
 import React, { CSSProperties, useState } from 'react'
-import { Alert, AlertIcon, Box, Button, Divider, Flex, FormControl, FormLabel, Grid, GridItem, HStack, Select, Slider, SliderFilledTrack, SliderMark, SliderThumb, SliderTrack, Tag, TagLabel, Text, VStack } from "@chakra-ui/react"
+import { Alert, AlertIcon, Box, Button, Center, Divider, Flex, FormControl, FormLabel, Grid, GridItem, HStack, Select, Slider, SliderFilledTrack, SliderMark, SliderThumb, SliderTrack, Tag, TagLabel, Text, VStack } from "@chakra-ui/react"
 
 import { HeaderBar } from '../components/headerBar'
-import { EventSearchAreaFullDetail, EventSearchAreaInfo, EventSearchFullDetail, EventSearchHallInfo, EventSearchResult, AreaSeatingMapSeat, AreaSeatingMap, AreaSeatingMapRow } from '../contracts/backendApi'
+import { EventSearchAreaFullDetail, EventSearchAreaInfo, EventSearchFullDetail, EventSearchHallInfo, EventSearchResult, AreaSeatingMapSeat, AreaSeatingMap, AreaSeatingMapRow, GrabSeatsRequest, GrabSeatsReply } from '../contracts/backendApi'
 import { Utility } from '../utility'
 import Link from 'next/link'
 import { EventDetailsSidebar } from '../components/eventDetailsSidebar'
 import { PriceLevelProps } from '../contracts/props'
 import { CSSObject } from '@emotion/react'
+import { ServiceClient } from '../serviceClient'
 
 const SeatCountSlider = (props: {
     value: number
@@ -116,78 +117,159 @@ interface AreaPageProps {
     data: EventSearchAreaFullDetail
 }
 
+interface SeatingPlanSidebarState {
+    status: 'init' | 'inprogress' | 'success' | 'failure'
+    selectedSeatCount: number
+    selectedSeatIds: string[]
+    grabResult?: GrabSeatsReply
+}
+
+const SeatingPlanSidebarReducer = {
+    createInitialState(): SeatingPlanSidebarState {
+        return {
+            status: 'init',
+            selectedSeatCount: 2,
+            selectedSeatIds: [],
+            grabResult: undefined
+        }
+    },
+    withSelectedSeatCount(state: SeatingPlanSidebarState, count: number): SeatingPlanSidebarState {
+        //console.log('REDUCER> withSelectedSeatCount>', state)
+        return {
+            ...state,
+            selectedSeatCount: count
+        }
+    },
+    withSelectedSeatIdsInProgress(state: SeatingPlanSidebarState, seatIds: string[]): SeatingPlanSidebarState {
+        //console.log('REDUCER> withSelectedSeatIdsInProgress>', state)
+        return {
+            ...state,
+            selectedSeatIds: seatIds,
+            status: 'inprogress',
+            grabResult: undefined
+        }
+    },
+    withGrabReply(state: SeatingPlanSidebarState, seatIds: string[], reply: GrabSeatsReply): SeatingPlanSidebarState {
+        //console.log('REDUCER> withGrabReply>', state)
+        return {
+            ...state,
+            selectedSeatCount: seatIds.length,
+            selectedSeatIds: seatIds,
+            status: reply.success === true ? 'success' : 'failure',
+            grabResult: reply
+        }
+    }
+}
 
 const SeatingPlanSidebar = (props: AreaPageProps) => {
-    const [selectedSeatIds, setSelectedSeatIds] = useState([])
-    const [selectedSeatCount, setSelectedSeatCount] = useState(2)
+    const [state, setState] = useState(SeatingPlanSidebarReducer.createInitialState())
 
     const priceLevelProps = Utility.joinPriceLevelsWithPriceList(props.data.priceLevels, props.data.header.priceList)
 
-    const selectSeats = async (seat: AreaSeatingMapSeat, row: AreaSeatingMapRow) => {
+    const findSelectedIds = (seat: AreaSeatingMapSeat, row: AreaSeatingMapRow): string[] => {
         const indexFrom = row.seats.indexOf(seat)
-        if (indexFrom + selectedSeatCount > row.seats.length) {
-            return false;
+        if (indexFrom + state.selectedSeatCount > row.seats.length) {
+            return [];
         }
 
-        const seatIds = []
+        const seatIds: string[] = []
         
-        for (let i = indexFrom ; i < indexFrom + selectedSeatCount ; i++) {
+        for (let i = indexFrom ; i < indexFrom + state.selectedSeatCount ; i++) {
             if (row.seats[i].status !== 1) {
-                return false;
+                return [];
             }
             seatIds.push(row.seats[i].id)
         }
 
-        setSelectedSeatIds(seatIds)
+        return seatIds
     }
+
+    const selectSeats = async (seat: AreaSeatingMapSeat, row: AreaSeatingMapRow) => {
+        const seatIds = findSelectedIds(seat, row)
+        if (seatIds.length < 1) {
+            return;
+        }
+
+        setState(SeatingPlanSidebarReducer.withSelectedSeatIdsInProgress(state, seatIds))
+
+        const request: GrabSeatsRequest = {
+            eventId: props.data.header.event.eventId,
+            hallAreaId: props.data.hallAreaId,
+            seatIds
+        }
+
+        const reply = await ServiceClient.grabSeats(request)
+        setState(SeatingPlanSidebarReducer.withGrabReply(state, seatIds, reply))
+    }
+
+    const setSelectedSeatCount = (count: number) => {
+        setState(SeatingPlanSidebarReducer.withSelectedSeatCount(state, count))
+    }
+
+    const checkoutUrlQuery = state.status === 'success'
+        ? `eventId=${props.data.header.event.eventId}&areaId=${props.data.hallAreaId}&token=${state.grabResult?.checkoutToken}`
+        : ''
 
     return (
         <>
             <HStack alignItems='start' mb='5px'>
-            <Tag size={'lg'} borderRadius='2xl' variant='solid' colorScheme='green' mt='5px' ml='0' mr='10px' verticalAlign='start'>
-                <TagLabel fontSize={'2xl'} fontWeight={700} mb='3px'>Area {props.data.hallAreaName}</TagLabel>
-            </Tag>
-            <Box minW='400px'>
-                <Text fontSize='2xl' fontWeight={400}>
-                    Let's grab your seats! How many?
-                </Text>
-                <Box w='full' pl='15px' pr='15px' mb='25px'>
-                    <SeatCountSlider value={2} onChanged={setSelectedSeatCount} />
-                </Box>
-                <Box display='none'>
+                <Tag size={'lg'} borderRadius='2xl' variant='solid' colorScheme='green' mt='5px' ml='0' mr='10px' verticalAlign='start'>
+                    <TagLabel fontSize={'2xl'} fontWeight={700} mb='3px'>Area {props.data.hallAreaName}</TagLabel>
+                </Tag>
+                <Box minW='400px'>
                     <Text fontSize='2xl' fontWeight={400}>
-                        Now pick your first seat in the seat plan.
+                        Let's grab your seats! How many?
                     </Text>
-                    <Text fontSize='1xl' mt='-5px' mb='10px' fontWeight={400}>
-                        We will automatically pick the rest from left to right.
-                    </Text>
+                    <Box w='full' pl='15px' pr='15px' mb='25px'>
+                        <SeatCountSlider value={state.selectedSeatCount} onChanged={setSelectedSeatCount} />
+                    </Box>
                 </Box>
+            </HStack>
+            <Box w='full' h='80px'>
+                {state.status === 'init' && 
+                    <Box w='full'>
+                        <Center>
+                            <Box>
+                                <Text fontSize='2xl' fontWeight={400}>
+                                    Now pick your first seat in the seat plan.
+                                </Text>
+                                <Text fontSize='1xl' mt='-5px' mb='10px' fontWeight={400}>
+                                    We will automatically pick the rest from left to right.
+                                </Text>
+                            </Box>
+                        </Center>
+                    </Box>
+                }
+                {state.status === 'failure' && 
+                    <Alert status='warning' variant='left-accent' fontSize='18' fontWeight={400} lineHeight='1.0' mb='10px'>
+                        <AlertIcon />
+                        {state.grabResult?.errorText || 'Oops! Something went wrong (2)'}
+                    </Alert>
+                }
+                {state.status === 'success' && 
+                    <Alert status='success' variant='left-accent' fontSize='18' fontWeight={600} lineHeight='1.0' mb='10px'>
+                        <AlertIcon />
+                        The seats are yours! You now have
+                        <Tag size={'md'} borderRadius='full' variant='solid' colorScheme='orange' ml='7px' mr='7px' mt='3px' verticalAlign='middle'>
+                            <TagLabel fontSize={'lg'}>07:00</TagLabel>
+                        </Tag>                                       
+                        to 
+                        <Link href={`/checkout?${checkoutUrlQuery}`}>
+                            <Button size='xs' colorScheme='green' fontWeight={400} fontSize='18' h='35px' fontWeight='500' ml='10px'>
+                                <u>Complete Your Order</u>
+                            </Button>
+                        </Link>                                
+                    </Alert>                                    
+                }
             </Box>
-        </HStack>
-        <Alert status='warning' variant='left-accent' fontSize='18' fontWeight={400} lineHeight='1.0' mb='10px'>
-            <AlertIcon />
-            Oops, someone took those. We've refreshed the plan. Please try again.
-        </Alert>
-        <Alert display='none' status='success' variant='left-accent' fontSize='18' fontWeight={600} lineHeight='1.0' mb='10px'>
-            <AlertIcon />
-            The seats are yours! You now have
-            <Tag size={'md'} borderRadius='full' variant='solid' colorScheme='orange' ml='7px' mr='7px' mt='3px' verticalAlign='middle'>
-                <TagLabel fontSize={'lg'}>07:00</TagLabel>
-            </Tag>                                       
-            to 
-            <Link href={`/event?id=${props.data.header.event.eventId}`}>
-                <Button size='xs' colorScheme='green' fontWeight={400} fontSize='18' h='35px' fontWeight='500' ml='10px'>
-                    <u>Complete Your Order</u>
-                </Button>
-            </Link>                                
-        </Alert>                                    
-        <SeatingMap 
-            eventId={props.data.header.event.eventId} 
-            seatingMap={props.data.seatingMap} 
-            priceLevels={priceLevelProps} 
-            selectedSeatIds={selectedSeatIds}
-            onSeatClicked={selectSeats}/>
-    </>)
+            <SeatingMap 
+                eventId={props.data.header.event.eventId} 
+                seatingMap={props.data.seatingMap} 
+                priceLevels={priceLevelProps} 
+                selectedSeatIds={state.selectedSeatIds}
+                onSeatClicked={selectSeats}/>
+        </>
+    )
 }
 
 const AreaPage = (props: AreaPageProps) => {
@@ -205,7 +287,7 @@ const AreaPage = (props: AreaPageProps) => {
                         <Box minW='200px' minH='400px'>
                             <EventDetailsSidebar fullDetail={props.data.header} />
                         </Box>
-                        <Box minW='200px' minH='400px' fontSize='1xl'  color='blue.700'>
+                        <Box minW='650px' minH='400px' fontSize='1xl'  color='blue.700'>
                             <SeatingPlanSidebar {...props} />
                         </Box>
                     </Flex>
