@@ -1,4 +1,5 @@
-import { Box, Flex, Grid, GridItem, VStack, Text, Divider, Stat, StatLabel, Tag, TagLabel, StatGroup, HStack, Heading } from "@chakra-ui/react"
+import { Box, Flex, Grid, GridItem, VStack, Text, Divider, Stat, StatLabel, Tag, TagLabel, StatGroup, HStack, Heading, SimpleGrid } from "@chakra-ui/react"
+import { TwoStepCheckoutForm } from "../components/checkoutForm"
 import { EventDetailsSidebar } from "../components/eventDetailsSidebar"
 import { HeaderBar } from "../components/headerBar"
 import { OrderContract, TicketContract } from "../contracts/backendApi"
@@ -12,9 +13,9 @@ const TicketBasketItem = (props: { ticket: TicketContract }) => {
     const timeText = Utility.formatIsoDateTimeAsShortTime(ticket.startLocalTime)
 
     return (
-        <StatGroup border={'1px solid darkgray'} p={2} borderRadius={'xl'} w='500px' mb='10px'>
+        <StatGroup border={'1px solid lightgray'} p={2} borderRadius={'xl'} w='500px' mb='10px' color='gray.400'>
             <HStack w='full' wrap='nowrap' direction='row' justify='space-between' h='120px'>
-                <Stat color='blue.700' p='0'>
+                <Stat color='blue.700' p='0' color='gray.400'>
                     <StatLabel fontSize='xl'>{ticket.eventTitle} {ticket.showTitle}</StatLabel>
                     <StatLabel fontSize='md' mt='-8px'>{dateText} {timeText}</StatLabel>
                     <StatLabel fontSize='lg' mt='8px'>Area {ticket.areaName} Row {ticket.rowName} Seat {ticket.seatName}</StatLabel>
@@ -32,10 +33,6 @@ const TicketBasketItem = (props: { ticket: TicketContract }) => {
             </HStack>
         </StatGroup>
     )
-}
-
-const CheckoutForm = (props: { order: OrderContract }) => {
-    
 }
 
 interface CheckoutPageProps {
@@ -58,14 +55,19 @@ const CheckoutPage = (props: CheckoutPageProps) => {
                 <GridItem  h="full"></GridItem>
                 <GridItem  h="full" pt='140px'>
                     <VStack w='full'>
-                        <Heading fontSize='4xl' fontWeight={800} color='blue.700'>Checkout</Heading>
-                        <Text fontSize='2xl' mt='-5px !important'  color='blue.700'>Just one step away from getting your tickets!</Text>
-                        <Flex wrap='nowrap' justify='space-between' gap='40px' align='stretch'>
-                            <Box minW='650px' minH='400px'>
+                        <Heading color='blue.700'>Checkout</Heading>
+                        <Text fontSize='2xl' mt='-5px !important'  color='blue.700'>Just two steps away from getting your tickets!</Text>
+                        <Flex wrap='nowrap' justify='space-between' gap='0px' mt='40px !important' align='stretch'>
+                            <Box minW='600px' minH='400px'>
                                 {props.order && props.order.tickets.map(ticket => <TicketBasketItem key={ticket.id} ticket={ticket} />)}
                             </Box>
-                            <Box minW='450px' minH='400px' fontSize='1xl'  color='blue.700'>
-
+                            <Box minW='500px' minH='400px' fontSize='1xl'  color='blue.700'>
+                                {props.order && <TwoStepCheckoutForm 
+                                    order={props.order} 
+                                    eventId={props.eventId}
+                                    areaId={props.areaId}
+                                    checkoutToken={props.checkoutToken}
+                                />}
                             </Box>
                         </Flex>
                     </VStack>
@@ -74,6 +76,7 @@ const CheckoutPage = (props: CheckoutPageProps) => {
             </Grid>  
         </>
     )
+
 }
 
 export default CheckoutPage
