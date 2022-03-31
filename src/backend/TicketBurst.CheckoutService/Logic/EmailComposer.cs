@@ -9,7 +9,20 @@ public class EmailComposer
     {
         var message = new MimeMessage();
         message.To.Add(new MailboxAddress(name: order.CustomerName, address: order.CustomerEmail));
-        message.Subject = "Congratulations! Your tickets are Ready!";
+        message.Subject = "Summer Olympics 2024 - Order Confirmation and Tickets";
+
+        var builder = new BodyBuilder();
+        builder.TextBody = 
+            $"Hello {order.CustomerName}," + 
+            "Thank you again for your purchase." +
+            "Please find the tickets attached." +
+            "Best regards," +
+            "TicketBurst POC";
+
+        builder.Attachments.Add("tickets.pdf", ticketsPdf);
+        
+        message.Body = builder.ToMessageBody();
+        
         return message;
     }
 

@@ -95,7 +95,5 @@ public class TickedPdfTests
                     gridIn.Item(columns: 13).AlignCenter().AlignMiddle().Text("Avenida Miguel Ignacio Curi, 111 Sao Paulo, Brazil").FontSize(12);
                 });
             });
-        //.Text(text);
-        
     }
 }
