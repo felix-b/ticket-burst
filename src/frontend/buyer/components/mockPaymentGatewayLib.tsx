@@ -30,22 +30,43 @@ import { OrderContract } from "../contracts/backendApi";
 import { ServiceClient } from "../serviceClient";
 
 export interface MockPaymentGatewayAPI {
-    confirmPayment()
+    confirmPayment(paymentToken: string): Promise<void>
+    getCustomerSession(sessionId: string): Promise<CustomerSessionData>
 }
 
-const createMockPaymentGatewayAPI = (order: OrderContract) => {
+export interface CustomerSessionData {
+    orderNumber: number;
+    customerEmail: string;
+    customerName: string;
+    amount: number;
+    currency: string;
+    notificationStatus: string;
+}
+
+export const createMockPaymentGatewayAPI: () => MockPaymentGatewayAPI = () => {
     return {
-        async confirmPayment() {
+        async confirmPayment(paymentToken: string) {
+            console.log('createMockPaymentGatewayAPI.confirmPayment', paymentToken)
             const response = await fetch('http://localhost:3003/payment-mock/confirm-payment', {
                 method: 'POST', 
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(order.paymentToken),
+                body: JSON.stringify(paymentToken),
             })
             if (response.status === 200) {
-                window.top.location.href = '/checkout/success'
+                window.top.location.href = '/success?sessionId=' + paymentToken
             }
+        },
+        async getCustomerSession(sessionId: string) {
+            const requestUrl = 'http://localhost:3003/payment-mock/get-session?sessionId=' + sessionId
+            const response = await fetch(requestUrl)
+            if (response.status === 200) {
+                const envelope = await response.json()
+                const data = envelope.data as CustomerSessionData
+                return data
+            }
+            return undefined
         }
     }
 }

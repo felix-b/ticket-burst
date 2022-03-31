@@ -120,8 +120,11 @@ const PaymentDetailsForm = (props: {
     const [paymentAPI, setPaymentAPI] = useState<MockPaymentGatewayAPI>(null)
     const { orderWithPaymentToken, onStepBack } = props
 
+    console.log('PaymentDetailsForm.render', 'PAYMENT-TOKEN', orderWithPaymentToken.paymentToken)
+
     const handleSubmit = () => {
-        paymentAPI.confirmPayment()
+        console.log('PaymentDetailsForm.handleSubmit', 'PAYMENT-TOKEN', orderWithPaymentToken.paymentToken)
+        paymentAPI.confirmPayment(orderWithPaymentToken.paymentToken)
     }
 
     return (

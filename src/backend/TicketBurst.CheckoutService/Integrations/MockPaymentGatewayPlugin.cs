@@ -10,7 +10,11 @@ public class MockPaymentGatewayPlugin : IPaymentGatewayPlugin
 {
     private static readonly IDataProtectionProvider __protectionProvider = 
         DataProtectionProvider.Create(applicationName: typeof(MockPaymentGatewayPlugin).FullName!);
+    private static readonly int[] __randomResponseTimes =
+        new[] { 1000, 1500, 1200, 1300, 1400, 1100, 1700, 1900, 1800 };
 
+    private static uint __randomResponseTimeIndex = 0;
+    
     private readonly IDataProtector _dataProtector;
     
     public MockPaymentGatewayPlugin()
@@ -35,7 +39,7 @@ public class MockPaymentGatewayPlugin : IPaymentGatewayPlugin
         var json = JsonSerializer.Serialize(data);
         var paymentToken = _dataProtector.Protect(json);
 
-        await Task.Delay(TimeSpan.FromSeconds(3));
+        await Task.Delay(GetRandomResponseTime());
 
         return paymentToken;
     }
@@ -96,6 +100,13 @@ public class MockPaymentGatewayPlugin : IPaymentGatewayPlugin
         var json = _dataProtector.Unprotect(paymentToken);
         var data = JsonSerializer.Deserialize<PaymentData>(json);
         return data ?? throw new CryptographicException("Failed to decrypt payment token");
+    }
+
+    public TimeSpan GetRandomResponseTime()
+    {
+        var index = Interlocked.Increment(ref __randomResponseTimeIndex);
+        var milliseconds = __randomResponseTimes[index % __randomResponseTimes.Length];
+        return TimeSpan.FromMilliseconds(milliseconds);
     }
     
     //

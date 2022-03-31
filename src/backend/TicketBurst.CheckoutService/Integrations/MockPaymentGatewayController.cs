@@ -21,9 +21,8 @@ public class MockPaymentGatewayController : ControllerBase
     [ProducesResponseType(400)]
     public async Task<ActionResult<ReplyContract<string>>> ConfirmPayment([FromBody] string paymentToken)
     {
-        await Task.Delay(TimeSpan.FromMilliseconds(100));
-
         var mockPaymentPlugin = (MockPaymentGatewayPlugin)_paymentPlugin;
+        await Task.Delay(mockPaymentPlugin.GetRandomResponseTime());
         
         try
         {
@@ -43,6 +42,31 @@ public class MockPaymentGatewayController : ControllerBase
         {
             Console.WriteLine(e);
             return ApiResult.Error(400, "BadPaymentToken");
+        }
+    }
+    
+    [HttpGet("get-session")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404)]
+    public async Task<ActionResult<ReplyContract<MockPaymentGatewayPlugin.PaymentData>>> GetCustomerSession([FromQuery] string sessionId)
+    {
+        var mockPaymentPlugin = (MockPaymentGatewayPlugin)_paymentPlugin;
+        await Task.Delay(mockPaymentPlugin.GetRandomResponseTime());
+        
+        try
+        {
+            Console.WriteLine($"MockPaymentGatewayController> GetCustomerSession> PAYMENT TOKEN [{sessionId}]");
+            
+            var data = mockPaymentPlugin.DecryptPaymentToken(sessionId);
+
+            Console.WriteLine($"MockPaymentGatewayController> ConfirmPayment> DECRYPTED OK");
+            
+            return ApiResult.Success(200, data);
+        }
+        catch (CryptographicException e)
+        {
+            Console.WriteLine(e);
+            return ApiResult.Error(404, "SessionNotFound");
         }
     }
 }
