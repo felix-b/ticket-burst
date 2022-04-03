@@ -1,23 +1,26 @@
 ﻿using TicketBurst.Contracts;
 using TicketBurst.ReservationService;
 using TicketBurst.ReservationService.Actors;
+using TicketBurst.ReservationService.Integrations;
 using TicketBurst.ReservationService.Jobs;
 using TicketBurst.ServiceInfra;
 
 Console.WriteLine("TicketBurst Reservation Service starting.");
 Console.WriteLine($"Mock DB: {MockDatabase.ReservationJournal.All.Count} reservation journal records.");
 
-using var reservationExpiryJob = new ReservationExpiryJob(EventAreaManagerCache.SingletonInstance);
+var entityRepo = new InMemoryReservationEntityRepository();
+var mockActorEngine = new EventAreaManagerInProcessCache(entityRepo);
 
+using var reservationExpiryJob = new ReservationExpiryJob(mockActorEngine);
 using var notificationPublisher = new InProcessMessagePublisher<EventAreaUpdateNotificationContract>(
     receiverServiceName: ServiceName.Search,
     urlPath: new[] { "notify", "event-area-update" }); 
 
 using var notificationJob = new EventAreaUpdateNotificationJob(
-    EventAreaManagerCache.SingletonInstance,
+    mockActorEngine,
     notificationPublisher);
 
-using var warmupJop = new EventWarmupJob(EventAreaManagerCache.SingletonInstance);
+using var warmupJop = new EventWarmupJob(mockActorEngine);
 
 var httpEndpoint = ServiceBootstrap.CreateHttpEndpoint(
     serviceName: "ticketburst-services-reservation",
@@ -26,6 +29,8 @@ var httpEndpoint = ServiceBootstrap.CreateHttpEndpoint(
     commandLineArgs: args,
     configure: builder => {
         builder.Services.AddSingleton<EventWarmupJob>(warmupJop);
+        builder.Services.AddSingleton<IReservationEntityRepository>(entityRepo);
+        builder.Services.AddSingleton<IActorEngine>(mockActorEngine);
     });
 
 httpEndpoint.Run();

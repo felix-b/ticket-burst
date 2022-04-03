@@ -1,14 +1,15 @@
 ﻿using TicketBurst.ReservationService.Actors;
+using TicketBurst.ReservationService.Integrations;
 using TicketBurst.ServiceInfra;
 
 namespace TicketBurst.ReservationService.Jobs;
 
 public class ReservationExpiryJob : IDisposable
 {
-    private readonly EventAreaManagerCache _actorCache;
+    private readonly EventAreaManagerInProcessCache _actorCache;
     private readonly Timer _timer;
 
-    public ReservationExpiryJob(EventAreaManagerCache actorCache)
+    public ReservationExpiryJob(EventAreaManagerInProcessCache actorCache)
     {
         _actorCache = actorCache;
         _timer = new Timer(

@@ -1,5 +1,6 @@
 ﻿using TicketBurst.Contracts;
 using TicketBurst.ReservationService.Actors;
+using TicketBurst.ReservationService.Integrations;
 using TicketBurst.ServiceInfra;
 using Timer = System.Threading.Timer;
 
@@ -7,12 +8,12 @@ namespace TicketBurst.ReservationService.Jobs;
 
 public class EventAreaUpdateNotificationJob : IDisposable
 {
-    private readonly EventAreaManagerCache _actorCache;
+    private readonly EventAreaManagerInProcessCache _actorCache;
     private readonly IMessagePublisher<EventAreaUpdateNotificationContract> _publisher;
     private readonly Timer _timer;
 
     public EventAreaUpdateNotificationJob(
-        EventAreaManagerCache actorCache,
+        EventAreaManagerInProcessCache actorCache,
         IMessagePublisher<EventAreaUpdateNotificationContract> publisher)
     {
         _actorCache = actorCache;

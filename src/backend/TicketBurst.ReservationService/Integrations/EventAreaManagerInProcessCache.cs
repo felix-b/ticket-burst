@@ -1,11 +1,17 @@
 ﻿using System.Collections.Concurrent;
-using System.Collections.Immutable;
+using TicketBurst.ReservationService.Actors;
 
-namespace TicketBurst.ReservationService.Actors;
+namespace TicketBurst.ReservationService.Integrations;
 
-public class EventAreaManagerCache
+public class EventAreaManagerInProcessCache : IActorEngine
 {
     private readonly ConcurrentDictionary<string, Task<EventAreaManager?>> _loadPromiseByEventAreaKey = new();
+    private readonly IReservationEntityRepository _entityRepo;
+
+    public EventAreaManagerInProcessCache(IReservationEntityRepository entityRepo)
+    {
+        _entityRepo = entityRepo;
+    }
 
     public async Task<EventAreaManager?> GetActor(string eventId, string areaId)
     {
@@ -65,7 +71,7 @@ public class EventAreaManagerCache
 
     private async Task<EventAreaManager?> LoadActor(string eventId, string areaId)
     {
-        var actor = new EventAreaManager(eventId, areaId);
+        var actor = new EventAreaManager(eventId, areaId, _entityRepo);
 
         try
         {
@@ -83,6 +89,4 @@ public class EventAreaManagerCache
     {
         return $"{eventId}/{areaId}";
     }
-
-    public static readonly EventAreaManagerCache SingletonInstance = new();
 }

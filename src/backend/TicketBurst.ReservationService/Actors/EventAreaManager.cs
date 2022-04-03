@@ -2,6 +2,7 @@
 using System.Net;
 using TicketBurst.Contracts;
 using TicketBurst.ReservationService.Contracts;
+using TicketBurst.ReservationService.Integrations;
 using TicketBurst.ServiceInfra;
 
 namespace TicketBurst.ReservationService.Actors;
@@ -11,14 +12,17 @@ public class EventAreaManager
     public const int TemporaryReservationExpiryMinutes = 7;
     
     private readonly object _syncRoot = new(); //TODO: get rid once integrated with actor framework
+    private readonly IReservationEntityRepository _entityRepo;
     private ImmutableDictionary<string, SeatEntry> _seatById = ImmutableDictionary<string, SeatEntry>.Empty;
     private string _seatingMapId = string.Empty;
     private ulong _lastJournalSequenceNo = 1;
 
-    public EventAreaManager(string eventId, string areaId)
+    public EventAreaManager(string eventId, string areaId, IReservationEntityRepository entityRepo)
     {
         EventId = eventId;
         AreaId = areaId;
+
+        _entityRepo = entityRepo;
     }
 
     public async Task RecoverState()
@@ -34,7 +38,7 @@ public class EventAreaManager
         }
 
         var lastJournalRecordBySeatId = new Dictionary<string, ReservationJournalRecord>();
-        foreach (var record in MockDatabase.ReservationJournal.All)
+        foreach (var record in _entityRepo.GetJournalEntriesForRecovery(EventId, AreaId))
         {
             foreach (var seatId in record.SeatIds)
             {
@@ -81,7 +85,7 @@ public class EventAreaManager
             }
 
             var record = new ReservationJournalRecord(
-                Id: MockDatabase.MakeNewId(),
+                Id: _entityRepo.MakeNewId(),
                 CreatedAtUtc: DateTime.UtcNow,
                 EventId: EventId,
                 HallAreaId: AreaId,
@@ -112,7 +116,7 @@ public class EventAreaManager
         var availableCapacity = snapshot.Values.Count(seat => seat.Status == SeatStatus.Available);
 
         return new EventAreaUpdateNotificationContract(
-            Id: MockDatabase.MakeNewId(),
+            Id: _entityRepo.MakeNewId(),
             SequenceNo: _lastJournalSequenceNo,
             PublishedAtUtc: DateTime.UtcNow,
             EventId: EventId,
@@ -138,7 +142,7 @@ public class EventAreaManager
                 .ToList();
             
             var record = new ReservationJournalRecord(
-                Id: MockDatabase.MakeNewId(),
+                Id: _entityRepo.MakeNewId(),
                 CreatedAtUtc: now,
                 EventId: EventId,
                 HallAreaId: AreaId,
@@ -182,7 +186,7 @@ public class EventAreaManager
         }
 
         var newRecord = effectiveRecord with {
-            Id = MockDatabase.MakeNewId(),
+            Id = _entityRepo.MakeNewId(),
             SequenceNo = Interlocked.Increment(ref _lastJournalSequenceNo),
             CreatedAtUtc = DateTime.UtcNow,
             OrderNumber = orderNumber,
@@ -214,7 +218,7 @@ public class EventAreaManager
                 };
             }
 
-            MockDatabase.ReservationJournal.Append(record);
+            _entityRepo.AppendJournalEntry(record);
             _seatById = mutation.ToImmutable();
         }
     }

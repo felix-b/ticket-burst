@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 using TicketBurst.Contracts;
 using TicketBurst.ReservationService.Actors;
+using TicketBurst.ReservationService.Integrations;
 using TicketBurst.ReservationService.Jobs;
 using TicketBurst.ServiceInfra;
 
@@ -13,10 +14,12 @@ namespace TicketBurst.ReservationService.Controllers;
 public class NotificationController : ControllerBase
 {
     private readonly EventWarmupJob _warmupJob;
+    private readonly IActorEngine _actorEngine;
 
-    public NotificationController(EventWarmupJob warmupJob)
+    public NotificationController(EventWarmupJob warmupJob, IActorEngine actorEngine)
     {
         _warmupJob = warmupJob;
+        _actorEngine = actorEngine;
     }
 
     [HttpPost("event-sale")]
@@ -75,7 +78,7 @@ public class NotificationController : ControllerBase
         var eventId = order.Tickets[0].EventId;
         var areaId = order.Tickets[0].HallAreaId;
         
-        var actor = await EventAreaManagerCache.SingletonInstance.GetActor(eventId, areaId);
+        var actor = await _actorEngine.GetActor(eventId, areaId);
         if (actor == null)
         {
             return ApiResult.Error(400, "EventAreaNotFound");

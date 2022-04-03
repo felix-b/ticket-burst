@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using TicketBurst.Contracts;
 using TicketBurst.ReservationService.Actors;
 using TicketBurst.ReservationService.Contracts;
+using TicketBurst.ReservationService.Integrations;
 using TicketBurst.ServiceInfra;
 
 namespace TicketBurst.ReservationService.Controllers;
@@ -12,12 +13,15 @@ namespace TicketBurst.ReservationService.Controllers;
 [Route("reservation")]
 public class ReservationController : ControllerBase
 {
+    private readonly IActorEngine _actorEngine;
     private readonly IDataProtector _checkoutTokenProtector;
     
     public ReservationController(
         IDataProtectionProvider protectionProvider,
+        IActorEngine actorEngine,
         ILogger<ReservationController> logger)
     {
+        _actorEngine = actorEngine;
         _checkoutTokenProtector = protectionProvider.CreateProtector(DataProtectionPurpose.CheckoutToken);
     }
 
@@ -30,7 +34,7 @@ public class ReservationController : ControllerBase
     {
         var isValid = ValidateRequest();
         var actor = isValid
-            ? await EventAreaManagerCache.SingletonInstance.GetActor(request.EventId, request.HallAreaId)
+            ? await _actorEngine.GetActor(request.EventId, request.HallAreaId)
             : null;
 
         var response = EncryptCheckoutToken(actor?.TryReserveSeats(request));
@@ -74,7 +78,7 @@ public class ReservationController : ControllerBase
             return ApiResult.Error(400);
         }
         
-        var actor = await EventAreaManagerCache.SingletonInstance.GetActor(eventId, areaId);
+        var actor = await _actorEngine.GetActor(eventId, areaId);
         if (actor == null)
         {
             return ApiResult.Error(400);
