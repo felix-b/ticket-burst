@@ -33,7 +33,7 @@ spec:
     spec:
       containers:
       - name: ticketburst-services-checkout
-        image: ticketburst-services-checkout:v0
+        image: 381777116710.dkr.ecr.eu-south-1.amazonaws.com/ticketburst-checkout:v0
         ports:
         - containerPort: 80
         env:

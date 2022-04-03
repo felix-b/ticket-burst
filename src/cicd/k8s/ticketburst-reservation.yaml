@@ -33,7 +33,7 @@ spec:
     spec:
       containers:
       - name: ticketburst-services-reservation
-        image: ticketburst-services-reservation:v0
+        image: 381777116710.dkr.ecr.eu-south-1.amazonaws.com/ticketburst-reservation:v0
         ports:
         - containerPort: 80
         env:

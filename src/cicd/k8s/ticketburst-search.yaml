@@ -33,7 +33,7 @@ spec:
     spec:
       containers:
       - name: ticketburst-services-search
-        image: ticketburst-services-search:v0
+        image: 381777116710.dkr.ecr.eu-south-1.amazonaws.com/ticketburst-search:v0
         ports:
         - containerPort: 80
         env:
