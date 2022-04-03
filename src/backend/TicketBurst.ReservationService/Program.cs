@@ -8,7 +8,7 @@ using TicketBurst.ServiceInfra;
 Console.WriteLine("TicketBurst Reservation Service starting.");
 Console.WriteLine($"Mock DB: {MockDatabase.ReservationJournal.All.Count} reservation journal records.");
 
-var entityRepo = new InMemoryReservationEntityRepository();
+var entityRepo = new MongoDbReservationEntityRepository();//new InMemoryReservationEntityRepository();
 var mockActorEngine = new EventAreaManagerInProcessCache(entityRepo);
 
 using var reservationExpiryJob = new ReservationExpiryJob(mockActorEngine);

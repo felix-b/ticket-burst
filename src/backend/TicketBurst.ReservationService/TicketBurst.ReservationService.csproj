@@ -9,7 +9,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\TicketBurst.ServiceInfra\TicketBurst.ServiceInfra.csproj" />
+        <ProjectReference Include="..\TicketBurst.ServiceInfra\TicketBurst.ServiceInfra.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="MongoDB.Driver" Version="2.15.0" />
     </ItemGroup>
 
 </Project>
