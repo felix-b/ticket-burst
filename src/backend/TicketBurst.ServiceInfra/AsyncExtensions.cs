@@ -22,6 +22,24 @@ public static class AsyncExtensions
         }
     }
 
+    public static async IAsyncEnumerable<R> AsTranslatingAsyncEnumerable<S, R>(
+        this IAsyncCursor<S> cursor, 
+        Func<S, R> translate,
+        [EnumeratorCancellation] CancellationToken cancellation = default)
+    {
+        while (await cursor.MoveNextAsync(cancellation))
+        {
+            var batch = cursor.Current;
+            if (batch != null)
+            {
+                foreach (var item in batch)
+                {
+                    yield return translate(item);
+                }
+            }
+        }
+    }
+    
     public static IList<T> ToListSync<T>(this IAsyncEnumerable<T> asyncEnumerable)
     {
         var results = new List<T>();

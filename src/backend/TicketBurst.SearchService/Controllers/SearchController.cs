@@ -10,15 +10,6 @@ using TicketBurst.ServiceInfra;
 
 namespace TicketBurst.SearchService.Controllers;
 
-public class EventSearchRequestContract
-{
-    public string? Id { get; set; }
-    public DateTime? FromDate { get; set; }    
-    public DateTime? ToDate { get; set; }
-    public bool? Selling { get; set; }
-    public int? Count { get; set; }
-}
-
 [ApiController]
 [Route("search")]
 public class SearchController : ControllerBase
@@ -40,15 +31,12 @@ public class SearchController : ControllerBase
     public async Task<ActionResult<ReplyContract<IEnumerable<EventSearchResultContract>>>> Get(
         [FromQuery] EventSearchRequestContract request)
     {
-        var query = BuildQuery();
-        var maxResultCount = Math.Min(100, request.Count ?? 20); 
-        var foundEvents = query
-            .Take(maxResultCount)
-            .ToArray(); //TODO: async?
+        request.Count = Math.Min(100, request.Count ?? 20);
+        var foundEvents = await _entityRepo.QueryEvents(request);
             
         var results = new List<EventSearchResultContract>();
 
-        foreach (var @event in foundEvents)
+        await foreach (var @event in foundEvents)
         {
             var result = await EnrichEventToSearchResult(@event);
             results.Add(result);
@@ -65,33 +53,6 @@ public class SearchController : ControllerBase
         // return new JsonResult(reply) {
         //     StatusCode = 200
         // };
-
-        IQueryable<EventContract> BuildQuery()
-        {
-            var query = _entityRepo.CreateEventQuery();
-
-            if (request.Selling == true)
-            {
-                query = query.OrderByDescending(e => e.IsOpenForSale);
-            }
-
-            if (!string.IsNullOrWhiteSpace(request.Id))
-            {
-                query = query.Where(e => e.Id == request.Id);
-            }
-
-            if (request.FromDate.HasValue)
-            {
-                query = query.Where(e => e.EventStartUtc >= request.FromDate.Value.Date);
-            }
-
-            if (request.ToDate.HasValue)
-            {
-                query = query.Where(e => e.EventStartUtc < request.ToDate.Value.Date.AddDays(1));
-            }
-
-            return query.OrderBy(e => e.EventStartUtc);
-        }
     }
     
     [HttpGet("event/{id}")]

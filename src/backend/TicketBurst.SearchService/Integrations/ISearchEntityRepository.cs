@@ -1,4 +1,5 @@
-﻿using MongoDB.Driver;
+﻿using System.Collections.Immutable;
+using MongoDB.Driver;
 using TicketBurst.Contracts;
 using TicketBurst.SearchService.Contracts;
 using TicketBurst.ServiceInfra;
@@ -10,7 +11,7 @@ public interface ISearchEntityRepository : IEntityRepository
     string MakeNewId();
 
     Task<IAsyncEnumerable<EventContract>> GetAllEvents();
-    IQueryable<EventContract> CreateEventQuery();
+    Task<IAsyncEnumerable<EventContract>> QueryEvents(EventSearchRequestContract query);
     Task<EventContract?> TryGetEventById(string eventId);
     Task UpdateIsOpenForSale(string eventId, bool newValue);
 
@@ -22,19 +23,18 @@ public interface ISearchEntityRepository : IEntityRepository
 
     Task<IAsyncEnumerable<ShowContract>> GetAllShows();
     Task<ShowContract?> TryGetShowById(string showId);
-    
+
     Task<IAsyncEnumerable<TroupeContract>> GetAllTroupes();
     Task<IAsyncEnumerable<TroupeContract>> GetTroupesByIds(IEnumerable<string> troupeIds);
-    
+
     Task<IAsyncEnumerable<VenueContract>> GetAllVenuesWithoutHalls();
     Task<VenueContract?> TryGetVenueById(string venueId);
-    
+
     Task<IAsyncEnumerable<HallSeatingMapContract>> GetAllHallSeatingMapsWithoutAreas();
     Task<HallSeatingMapContract?> TryGetHallSeatingMapById(string hallSeatingMapId);
-    Task<HallSeatingMapContract?> TryGetHallSeatingMapWithoutSeats(string hallSeatingMapId);
 
-    public async Task<EventContract> GetEventByIdOrThrow(string eventId) => 
-        await TryGetEventById(eventId) 
+    public async Task<EventContract> GetEventByIdOrThrow(string eventId) =>
+        await TryGetEventById(eventId)
         ?? throw NotFound<EventContract>(eventId);
 
     public EventContract GetEventByIdOrThrowSync(string eventId)
@@ -44,24 +44,24 @@ public interface ISearchEntityRepository : IEntityRepository
         return task.Result;
     }
 
-    public async Task<VenueContract> GetVenueByIdOrThrow(string venueId) => 
-        await TryGetVenueById(venueId) 
+    public async Task<VenueContract> GetVenueByIdOrThrow(string venueId) =>
+        await TryGetVenueById(venueId)
         ?? throw NotFound<VenueContract>(venueId);
 
-    public async Task<ShowContract> GetShowByIdOrThrow(string showId) => 
-        await TryGetShowById(showId) 
+    public async Task<ShowContract> GetShowByIdOrThrow(string showId) =>
+        await TryGetShowById(showId)
         ?? throw NotFound<ShowContract>(showId);
 
-    public async Task<ShowTypeContract> GetShowTypeByIdOrThrow(string showTypeId) => 
-        await TryGetShowTypeById(showTypeId) 
+    public async Task<ShowTypeContract> GetShowTypeByIdOrThrow(string showTypeId) =>
+        await TryGetShowTypeById(showTypeId)
         ?? throw NotFound<ShowTypeContract>(showTypeId);
 
-    public async Task<GenreContract> GetGenreByIdOrThrow(string genreId) => 
-        await TryGetGenreById(genreId) 
+    public async Task<GenreContract> GetGenreByIdOrThrow(string genreId) =>
+        await TryGetGenreById(genreId)
         ?? throw NotFound<GenreContract>(genreId);
 
-    public async Task<HallSeatingMapContract> GetHallSeatingMapByIdOrThrow(string hallSeatingMapId) => 
-        await TryGetHallSeatingMapById(hallSeatingMapId) 
+    public async Task<HallSeatingMapContract> GetHallSeatingMapByIdOrThrow(string hallSeatingMapId) =>
+        await TryGetHallSeatingMapById(hallSeatingMapId)
         ?? throw NotFound<HallSeatingMapContract>(hallSeatingMapId);
 
     public HallSeatingMapContract GetHallSeatingMapByIdOrThrowSync(string hallSeatingMapId)
@@ -70,8 +70,8 @@ public interface ISearchEntityRepository : IEntityRepository
         task.Wait();
         return task.Result;
     }
-    
-    public IList<EventContract> GetAllEventsSync() 
+
+    public IList<EventContract> GetAllEventsSync()
     {
         var task = GetAllEvents();
         task.Wait();
@@ -83,5 +83,20 @@ public interface ISearchEntityRepository : IEntityRepository
         var task = TryGetHallSeatingMapById(hallSeatingMapId);
         task.Wait();
         return task.Result;
+    }
+
+    public async Task<HallSeatingMapContract?> TryGetHallSeatingMapWithoutSeats(string hallSeatingMapId)
+    {
+        var hallSeatingMap = await TryGetHallSeatingMapById(hallSeatingMapId);
+        if (hallSeatingMap == null)
+        {
+            return null;
+        }
+
+        return hallSeatingMap with {
+            Areas = hallSeatingMap.Areas.Select(area => area with {
+                Rows = ImmutableList<SeatingMapRowContract>.Empty
+            }).ToImmutableList()
+        };
     }
 }

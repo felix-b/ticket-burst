@@ -6,12 +6,23 @@ using TicketBurst.SearchService.Logic;
 using TicketBurst.ServiceInfra;
 
 Console.WriteLine("TicketBurst Search Service starting.");
-Console.WriteLine(
-    $"Mock DB: {MockDatabase.Venues.All.Count} venues,  " +
-    $"{MockDatabase.HallSeatingMaps.All.Count} seating maps, " +
-    $"{MockDatabase.Events.All.Count} events.");
+// Console.WriteLine(
+//     $"Mock DB: {MockDatabase.Venues.All.Count} venues,  " +
+//     $"{MockDatabase.HallSeatingMaps.All.Count} seating maps, " +
+//     $"{MockDatabase.Events.All.Count} events.");
 
-var searchEntityRepo = new InMemorySearchEntityRepository();
+MockDatabase.UseObjectId();
+
+var searchEntityRepo = new MongoDbSearchEntityRepository();// new InMemorySearchEntityRepository();
+if (searchEntityRepo.ShouldInsertInitialData())
+{
+    Console.WriteLine(
+        $"Detected empty DB! Inserting data: {MockDatabase.Venues.All.Count} venues, " +
+        $"{MockDatabase.HallSeatingMaps.All.Count} seating maps, " +
+        $"{MockDatabase.Events.All.Count} events.");
+    searchEntityRepo.InsertInitialData();
+}
+    
 var eventSeatingCache = new EventSeatingStatusCache(searchEntityRepo);
 
 using var saleNotificationPublisher = new InProcessMessagePublisher<EventSaleNotificationContract>(

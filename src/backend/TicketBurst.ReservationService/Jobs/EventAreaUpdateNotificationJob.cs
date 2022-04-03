@@ -18,7 +18,7 @@ public class EventAreaUpdateNotificationJob : IDisposable
         _actorCache = actorCache;
         _publisher = publisher;
         _timer = new Timer(
-            HandleTimerTick, 
+            InProcessJob.WithTimerErrorHandling(this, HandleTimerTick), 
             state: null, 
             dueTime: TimeSpan.FromSeconds(15), 
             period: TimeSpan.FromSeconds(15));
@@ -29,7 +29,7 @@ public class EventAreaUpdateNotificationJob : IDisposable
         _timer.Dispose();
     }
 
-    private void HandleTimerTick(object? state)
+    private void HandleTimerTick()
     {
         _actorCache.ForEachActor(actor => {
             var notification = actor.GetUpdateNotification();

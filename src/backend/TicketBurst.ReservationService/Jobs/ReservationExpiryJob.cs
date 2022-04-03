@@ -1,4 +1,5 @@
 ﻿using TicketBurst.ReservationService.Actors;
+using TicketBurst.ServiceInfra;
 
 namespace TicketBurst.ReservationService.Jobs;
 
@@ -10,7 +11,11 @@ public class ReservationExpiryJob : IDisposable
     public ReservationExpiryJob(EventAreaManagerCache actorCache)
     {
         _actorCache = actorCache;
-        _timer = new Timer(HandleTimerTick, state: null, dueTime: TimeSpan.FromSeconds(20), period: TimeSpan.FromSeconds(20));
+        _timer = new Timer(
+            InProcessJob.WithTimerErrorHandling(this, HandleTimerTick), 
+            state: null, 
+            dueTime: TimeSpan.FromSeconds(20), 
+            period: TimeSpan.FromSeconds(20));
     }
 
     public void Dispose()
@@ -18,7 +23,7 @@ public class ReservationExpiryJob : IDisposable
         _timer.Dispose();
     }
 
-    private void HandleTimerTick(object? state)
+    private void HandleTimerTick()
     {
         _actorCache.ForEachActor(actor => {
             Console.WriteLine($"RESERVATION EXPIRY JOB > EAM[${actor.EventId}/${actor.AreaId}]");

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Immutable;
+using MongoDB.Bson;
 using TicketBurst.Contracts;
 using TicketBurst.SearchService.Contracts;
 
@@ -11,7 +12,7 @@ public static class MockDatabase
         #region Records
         
         public static readonly VenueContract NeoQuimicaArena = new(
-            Id: "ca8eab73-d9ab-4a82-9b81-9f9f32aa9975", 
+            Id: MakeNewId(), 
             Name: "Neo Quimica Arena",
             Address: "Avenida Miguel Ignacio Curi, 111 Sao Paulo, Brazil",
             Location: new GeoPointContract(-23.54525,-46.474278),
@@ -24,7 +25,7 @@ public static class MockDatabase
         ); 
 
         public static readonly VenueContract EstadioGovernadorMagalhaesPinto = new(
-            Id: "0cd69f68-e921-4335-b793-03f361975fdc", 
+            Id: MakeNewId(), 
             Name: "Estadio Governador Magalhaes Pinto",
             Address: "Belo Horizonte, Minas Gerais, Brazil",
             Location: new GeoPointContract(-19.865833, -43.970833),
@@ -37,7 +38,7 @@ public static class MockDatabase
         ); 
 
         public static readonly VenueContract ItaipavaArenaFonteNova = new(
-            Id: "d5540ce3-46fc-41b8-9e1c-76b9017b302a", 
+            Id: MakeNewId(), 
             Name: "Itaipava Arena Fonte Nova",
             Address: "Ladeira da Fonte das Pedras, Nazare, Salvador, Brazil",
             Location: new GeoPointContract(-12.978611, -38.504167),
@@ -50,7 +51,7 @@ public static class MockDatabase
         ); 
 
         public static readonly VenueContract ArenaBRBManeGarrincha = new(
-            Id: "1dcad226-6fcf-43d9-8eaf-04990860664c", 
+            Id: MakeNewId(), 
             Name: "Arena BRB Mane Garrincha",
             Address: "SRPN Estadio Nacional Mane Garrincha Brasília, Distrito Federal, Brazil",
             Location: new GeoPointContract(-15.783626, -47.899050),
@@ -63,7 +64,7 @@ public static class MockDatabase
         ); 
 
         public static readonly VenueContract EstadioJornalistaMarioFilho = new(
-            Id: "b676fad0-9323-4b72-b250-66fc48110fda", 
+            Id: MakeNewId(), 
             Name: "Estadio Jornalista Mario Filho",
             Address: "Maracana, Rio de Janeiro, Brazil",
             Location: new GeoPointContract(-22.912173, -43.230177),
@@ -93,7 +94,7 @@ public static class MockDatabase
     public static class Genres
     {
         public static readonly GenreContract Football = new(
-            Id: "28a28fa5-1e95-4810-b9c6-b52dc8a93d29", 
+            Id: MakeNewId(), 
             Name: "Football", 
             PosterImageUrl: string.Empty); 
 
@@ -103,7 +104,7 @@ public static class MockDatabase
     public static class ShowTypes
     {
         public static ShowTypeContract Match = new(
-            Id: "180bac07-f03a-4c3c-994b-d3ee9926428f",
+            Id: MakeNewId(), 
             Name: "Match",
             PosterImageUrl: string.Empty);
         
@@ -119,7 +120,7 @@ public static class MockDatabase
             #region Records
             
             public static readonly ShowContract QuarterFinal = new(
-                Id: "8f75f4e7-7391-4158-8db9-e370c0bfe2e3",
+                Id: MakeNewId(), 
                 ShowTypeId: ShowTypes.Match.Id,
                 GenreId: Genres.Football.Id,
                 TroupeIds: null,
@@ -128,7 +129,7 @@ public static class MockDatabase
                 PosterImageUrl: string.Empty);
 
             public static readonly ShowContract SemiFinal = new(
-                Id: "a598be4d-05b6-435b-818a-81bcbba9a509",
+                Id: MakeNewId(), 
                 ShowTypeId: ShowTypes.Match.Id,
                 GenreId: Genres.Football.Id,
                 TroupeIds: null,
@@ -137,7 +138,7 @@ public static class MockDatabase
                 PosterImageUrl: string.Empty);
 
             public static readonly ShowContract GoldMedalFinal = new(
-                Id: "d34daf55-0daa-4273-b1b4-95cc84d340eb",
+                Id: MakeNewId(), 
                 ShowTypeId: ShowTypes.Match.Id,
                 GenreId: Genres.Football.Id,
                 TroupeIds: null,
@@ -146,7 +147,7 @@ public static class MockDatabase
                 PosterImageUrl: string.Empty);
 
             public static readonly ShowContract BronzeMedalFinal = new(
-                Id: "7ff48d6a-9d7e-4e38-a458-043ea2e9ab9d",
+                Id: MakeNewId(), 
                 ShowTypeId: ShowTypes.Match.Id,
                 GenreId: Genres.Football.Id,
                 TroupeIds: null,
@@ -177,49 +178,49 @@ public static class MockDatabase
             #region Records
             
             public static TroupeContract Brazil = new(
-                Id: "f4dbdf83-bcc2-473d-80a9-c911e6ffef5f",
+                Id: MakeNewId(), 
                 Name: "Brazil",
                 PosterImageUrl: string.Empty,
                 GenreId: Genres.Football.Id);
 
             public static TroupeContract Colombia = new(
-                Id: "5eb2c786-899a-4639-9073-5f9a491f17b5",
+                Id: MakeNewId(), 
                 Name: "Colombia",
                 PosterImageUrl: string.Empty,
                 GenreId: Genres.Football.Id);
             
             public static TroupeContract SouthKorea = new(
-                Id: "9c8aa818-aaa3-4b21-a736-8b5c4cdff294",
+                Id: MakeNewId(), 
                 Name: "South Korea",
                 PosterImageUrl: string.Empty,
                 GenreId: Genres.Football.Id);
                         
             public static TroupeContract Honduras = new(
-                Id: "d9e8a382-7d6b-4517-b07d-757d5b1f00cb",
+                Id: MakeNewId(), 
                 Name: "Honduras",
                 PosterImageUrl: string.Empty,
                 GenreId: Genres.Football.Id);
 
             public static TroupeContract Nigeria = new(
-                Id: "659e0c93-7ec6-415a-9fde-6396b2297c15",
+                Id: MakeNewId(), 
                 Name: "Nigeria",
                 PosterImageUrl: string.Empty,
                 GenreId: Genres.Football.Id);
 
             public static TroupeContract Denmark = new(
-                Id: "7e5339a0-1365-441e-bee3-e7532f4c13b3",
+                Id: MakeNewId(), 
                 Name: "Denmark",
                 PosterImageUrl: string.Empty,
                 GenreId: Genres.Football.Id);
 
             public static TroupeContract Portugal = new(
-                Id: "bfc01344-169e-470f-9318-8cd923192529",
+                Id: MakeNewId(), 
                 Name: "Portugal",
                 PosterImageUrl: string.Empty,
                 GenreId: Genres.Football.Id);
 
             public static TroupeContract Germany = new(
-                Id: "45ca7593-86b9-4ee4-bcb7-fa5fcffe1952",
+                Id: MakeNewId(), 
                 Name: "Germany",
                 PosterImageUrl: string.Empty,
                 GenreId: Genres.Football.Id);
@@ -261,7 +262,7 @@ public static class MockDatabase
         public static class Football
         {
             public static readonly EventContract QuarterFinal1of4 = new(
-                Id: "d8deb62d-6ada-410c-9016-45c0480d06cc",
+                Id: MakeNewId(), 
                 ShowTypeId: ShowTypes.Match.Id,
                 ShowId: Shows.Football.QuarterFinal.Id,
                 TroupeIds: MakeImmutableList(Troupes.Football.Brazil.Id, Troupes.Football.Colombia.Id),
@@ -278,7 +279,7 @@ public static class MockDatabase
                 PosterImageUrl: string.Empty);
             
             public static readonly EventContract QuarterFinal2of4 = new(
-                Id: "d22508dd-dec2-4c25-b209-007bcdd3ae02",
+                Id: MakeNewId(), 
                 ShowTypeId: ShowTypes.Match.Id,
                 ShowId: Shows.Football.QuarterFinal.Id,
                 TroupeIds: MakeImmutableList(Troupes.Football.SouthKorea.Id, Troupes.Football.Honduras.Id),
@@ -295,7 +296,7 @@ public static class MockDatabase
                 PosterImageUrl: string.Empty);
 
             public static readonly EventContract QuarterFinal3of4 = new(
-                Id: "a8fa9ef4-d020-4512-8ad8-7c897258dae7",
+                Id: MakeNewId(), 
                 ShowTypeId: ShowTypes.Match.Id,
                 ShowId: Shows.Football.QuarterFinal.Id,
                 TroupeIds: MakeImmutableList(Troupes.Football.Nigeria.Id, Troupes.Football.Denmark.Id),
@@ -312,7 +313,7 @@ public static class MockDatabase
                 PosterImageUrl: string.Empty);
 
             public static readonly EventContract QuarterFinal4of4 = new(
-                Id: "b528b676-a7c7-4141-be85-a2cb3535e2d7",
+                Id: MakeNewId(), 
                 ShowTypeId: ShowTypes.Match.Id,
                 ShowId: Shows.Football.QuarterFinal.Id,
                 TroupeIds: MakeImmutableList(Troupes.Football.Portugal.Id, Troupes.Football.Germany.Id),
@@ -329,7 +330,7 @@ public static class MockDatabase
                 PosterImageUrl: string.Empty);
 
             public static readonly EventContract SemiFinal1of2 = new(
-                Id: "67e0d9e7-d062-427d-a6cd-020e791ad0c7",
+                Id: MakeNewId(), 
                 ShowTypeId: ShowTypes.Match.Id,
                 ShowId: Shows.Football.SemiFinal.Id,
                 TroupeIds: null,
@@ -346,7 +347,7 @@ public static class MockDatabase
                 PosterImageUrl: string.Empty);
 
             public static readonly EventContract SemiFinal2of2 = new(
-                Id: "d27e1604-8122-48ed-abf9-feaf9f677000",
+                Id: MakeNewId(), 
                 ShowTypeId: ShowTypes.Match.Id,
                 ShowId: Shows.Football.SemiFinal.Id,
                 TroupeIds: null,
@@ -363,7 +364,7 @@ public static class MockDatabase
                 PosterImageUrl: string.Empty);
 
             public static readonly EventContract GoldMedalFinal = new(
-                Id: "bfa81ffc-aebb-4514-8ed6-a85dc44aaab1",
+                Id: MakeNewId(), 
                 ShowTypeId: ShowTypes.Match.Id,
                 ShowId: Shows.Football.GoldMedalFinal.Id,
                 TroupeIds: null,
@@ -380,7 +381,7 @@ public static class MockDatabase
                 PosterImageUrl: string.Empty);
 
             public static readonly EventContract BronzeMedalFinal = new(
-                Id: "fb2cf88d-8c46-4e79-a085-ce30bb78c4c9",
+                Id: MakeNewId(), 
                 ShowTypeId: ShowTypes.Match.Id,
                 ShowId: Shows.Football.BronzeMedalFinal.Id,
                 TroupeIds: null,
@@ -611,12 +612,18 @@ public static class MockDatabase
     }
 
     private static readonly Random __random = new Random(123456);
+    private static Func<string> __makeNewId = () => Guid.NewGuid().ToString("d"); 
     
     public static string MakeNewId()
     {
-        return Guid.NewGuid().ToString("d");
+        return __makeNewId();
     }
 
+    public static void UseObjectId()
+    {
+        __makeNewId = () => ObjectId.GenerateNewId().ToString();
+    }
+    
     private static ImmutableList<T> MakeImmutableList<T>(params T[] items)
     {
         return ImmutableList<T>.Empty.AddRange(items);

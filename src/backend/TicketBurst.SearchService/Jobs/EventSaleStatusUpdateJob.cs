@@ -19,7 +19,7 @@ public class EventSaleStatusUpdateJob : IDisposable
         _entityRepo = entityRepo;
         _publisher = publisher;
         _timer = new Timer(
-            HandleTimerTick, 
+            InProcessJob.WithTimerErrorHandling(this, HandleTimerTick), 
             state: null, 
             dueTime: TimeSpan.FromSeconds(15), 
             period: TimeSpan.FromSeconds(15));
@@ -30,7 +30,7 @@ public class EventSaleStatusUpdateJob : IDisposable
         _timer.Dispose();
     }
 
-    private void HandleTimerTick(object? state)
+    private void HandleTimerTick()
     {
         var now = DateTime.UtcNow;
   

@@ -17,17 +17,15 @@ public abstract class InProcessJob<TWorkItem> : IDisposable
 
         _workerQueue = Channel.CreateBounded<TWorkItem>(
             options: new BoundedChannelOptions(boundCapacity),
-            itemDropped: (workItem) => {
-                Console.WriteLine($"{_name}: ERROR, work item dropped [{workItem}]");
-            });
-        
+            itemDropped: (workItem) => { Console.WriteLine($"{_name}: ERROR, work item dropped [{workItem}]"); });
+
         _workerTask = RunWorkerLoop();
     }
 
     public void Dispose()
     {
         _cancellation.Cancel();
-        
+
         if (!_workerTask.Wait(TimeSpan.FromSeconds(10)))
         {
             Console.WriteLine($"{_name}: ERROR, worker loop failed to stop in timely fashion");
@@ -67,10 +65,28 @@ public abstract class InProcessJob<TWorkItem> : IDisposable
             Console.WriteLine($"{_name}: JOB STOPPING upon request");
         }
         catch (Exception e)
-        {        
+        {
             Console.WriteLine($"{_name}: JOB WORKER LOOP CRASHED! {e}");
         }
 
         Console.WriteLine($"{_name}: JOB STOPPED");
+    }
+
+}
+
+public static class InProcessJob
+{
+    public static TimerCallback WithTimerErrorHandling(object job, Action onTick)
+    {
+        return state => {
+            try
+            {
+                onTick();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"SCHEDULED JOB [{job.GetType().Name}] FAILED! {e}");
+            }
+        };
     }
 }

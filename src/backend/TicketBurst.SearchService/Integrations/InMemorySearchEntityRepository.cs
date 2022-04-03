@@ -20,9 +20,36 @@ public class InMemorySearchEntityRepository : ISearchEntityRepository
         return MockDatabase.Events.All.ToAsyncEnumerable();
     }
 
-    public IQueryable<EventContract> CreateEventQuery()
+    public async Task<IAsyncEnumerable<EventContract>> QueryEvents(EventSearchRequestContract query)
     {
-        return MockDatabase.Events.All.AsQueryable();
+        var source = MockDatabase.Events.All.AsQueryable();
+        BuildQuery();
+        return source.ToAsyncEnumerable();
+        
+        IQueryable<EventContract> BuildQuery()
+        {
+            if (query.Selling == true)
+            {
+                source = source.OrderByDescending(e => e.IsOpenForSale);
+            }
+
+            if (!string.IsNullOrWhiteSpace(query.Id))
+            {
+                source = source.Where(e => e.Id == query.Id);
+            }
+
+            if (query.FromDate.HasValue)
+            {
+                source = source.Where(e => e.EventStartUtc >= query.FromDate.Value.Date);
+            }
+
+            if (query.ToDate.HasValue)
+            {
+                source = source.Where(e => e.EventStartUtc < query.ToDate.Value.Date.AddDays(1));
+            }
+
+            return source.OrderBy(e => e.EventStartUtc);
+        }
     }
 
     public async Task<EventContract?> TryGetEventById(string eventId)
@@ -100,18 +127,5 @@ public class InMemorySearchEntityRepository : ISearchEntityRepository
     public async Task<HallSeatingMapContract?> TryGetHallSeatingMapById(string hallSeatingMapId)
     {
         return MockDatabase.HallSeatingMaps.All.FirstOrDefault(m => m.Id == hallSeatingMapId);
-    }
-
-    public async Task<HallSeatingMapContract?> TryGetHallSeatingMapWithoutSeats(string hallSeatingMapId)
-    {
-        var hallSeatingMap = MockDatabase.HallSeatingMaps.All.FirstOrDefault(m => m.Id == hallSeatingMapId);
-        if (hallSeatingMap == null)
-            return null;
-
-        return hallSeatingMap with {
-            Areas = hallSeatingMap.Areas.Select(area => area with {
-                Rows = ImmutableList<SeatingMapRowContract>.Empty
-            }).ToImmutableList()
-        };
     }
 }
