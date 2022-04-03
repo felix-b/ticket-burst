@@ -1,5 +1,6 @@
 ﻿using System.Collections.Immutable;
 using TicketBurst.Contracts;
+using TicketBurst.SearchService.Integrations;
 using TicketBurst.ServiceInfra;
 using Timer = System.Threading.Timer;
 
@@ -7,11 +8,15 @@ namespace TicketBurst.SearchService.Jobs;
 
 public class EventSaleStatusUpdateJob : IDisposable
 {
+    private readonly ISearchEntityRepository _entityRepo;
     private readonly IMessagePublisher<EventSaleNotificationContract> _publisher;
     private readonly Timer _timer;
 
-    public EventSaleStatusUpdateJob(IMessagePublisher<EventSaleNotificationContract> publisher)
+    public EventSaleStatusUpdateJob(
+        ISearchEntityRepository entityRepo,
+        IMessagePublisher<EventSaleNotificationContract> publisher)
     {
+        _entityRepo = entityRepo;
         _publisher = publisher;
         _timer = new Timer(
             HandleTimerTick, 
@@ -28,8 +33,8 @@ public class EventSaleStatusUpdateJob : IDisposable
     private void HandleTimerTick(object? state)
     {
         var now = DateTime.UtcNow;
-        
-        foreach (var @event in MockDatabase.Events.All)
+  
+        foreach (var @event in _entityRepo.GetAllEventsSync())
         {
             try
             {
@@ -56,7 +61,7 @@ public class EventSaleStatusUpdateJob : IDisposable
         void OpenEventForSale(EventContract @event)
         {
             Console.WriteLine($"{nameof(EventSaleStatusUpdateJob)}: opening sale of event [{@event.Id}]");
-            MockDatabase.Events.UpdateIsOpenForSale(@event.Id, true);
+            _entityRepo.UpdateIsOpenForSale(@event.Id, true).Wait();
 
             var notification = CreateOpenSaleNotification(@event);
             _publisher.Publish(notification);
@@ -65,7 +70,7 @@ public class EventSaleStatusUpdateJob : IDisposable
         void CloseEventForSale(EventContract @event)
         {
             Console.WriteLine($"{nameof(EventSaleStatusUpdateJob)}: closing sale of event [{@event.Id}]");
-            MockDatabase.Events.UpdateIsOpenForSale(@event.Id, false);
+            _entityRepo.UpdateIsOpenForSale(@event.Id, false).Wait();
         }
 
         bool ShouldOpenForSale(EventContract @event)
@@ -85,13 +90,13 @@ public class EventSaleStatusUpdateJob : IDisposable
 
         EventSaleNotificationContract CreateOpenSaleNotification(EventContract @event)
         {
-            var hallAreaIds = MockDatabase.HallSeatingMaps.All
-                .First(m => m.Id == @event.HallSeatingMapId)
+            var hallSeatingMap = _entityRepo.GetHallSeatingMapByIdOrThrowSync(@event.HallSeatingMapId);
+            var hallAreaIds = hallSeatingMap
                 .Areas.Select(a => a.HallAreaId)
                 .ToImmutableList();
 
             return new EventSaleNotificationContract(
-                Id: MockDatabase.MakeNewId(),
+                Id: _entityRepo.MakeNewId(),
                 PublishedAtUtc: DateTime.UtcNow,
                 EventId: @event.Id,
                 HallAreaIds: hallAreaIds,

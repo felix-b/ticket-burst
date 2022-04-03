@@ -1,6 +1,7 @@
 ﻿using System.Collections.Immutable;
 using Microsoft.AspNetCore.Mvc;
 using TicketBurst.Contracts;
+using TicketBurst.SearchService.Integrations;
 using TicketBurst.ServiceInfra;
 
 namespace TicketBurst.SearchService.Controllers;
@@ -9,21 +10,23 @@ namespace TicketBurst.SearchService.Controllers;
 [Route("seatmap")]
 public class SeatMapController : ControllerBase
 {
-    public SeatMapController(ILogger<SeatMapController> logger)
+    private readonly ISearchEntityRepository _entityRepo;
+
+    public SeatMapController(
+        ISearchEntityRepository entityRepo,
+        ILogger<SeatMapController> logger)
     {
+        _entityRepo = entityRepo;
     }
 
     [HttpGet]
     [ProducesResponseType(200)]
-    public ActionResult<ReplyContract<IEnumerable<HallSeatingMapContract>>> Get()
+    public async Task<ActionResult<ReplyContract<IEnumerable<HallSeatingMapContract>>>> Get()
     {
-        var data =  MockDatabase.HallSeatingMaps.All
-            .Select(map => map with {
-                Areas = ImmutableList<AreaSeatingMapContract>.Empty
-            });
+        var data = await _entityRepo.GetAllHallSeatingMapsWithoutAreas();
         
         var reply = new ReplyContract<IEnumerable<HallSeatingMapContract>>(
-            data, 
+            data.ToListSync(), 
             ServiceProcessMetadata.GetCombinedInfo()
         );
 
@@ -35,10 +38,9 @@ public class SeatMapController : ControllerBase
     [HttpGet("{id}")]
     [ProducesResponseType(200)]
     [ProducesResponseType(404)]
-    public ActionResult<ReplyContract<HallSeatingMapContract?>> GetMap(string id)
+    public async Task<ActionResult<ReplyContract<HallSeatingMapContract?>>> GetMap(string id)
     {
-        var data =  MockDatabase.HallSeatingMaps.All
-            .FirstOrDefault(m => m.Id == id);
+        var data = await _entityRepo.TryGetHallSeatingMapById(id);
         
         var reply = new ReplyContract<HallSeatingMapContract?>(
             data, 
@@ -53,16 +55,12 @@ public class SeatMapController : ControllerBase
     [HttpGet("{seatingMapId}/areas")]
     [ProducesResponseType(200)]
     [ProducesResponseType(404)]
-    public ActionResult<ReplyContract<IEnumerable<AreaSeatingMapContract>>> GetMapAreaList(string seatingMapId)
+    public async Task<ActionResult<ReplyContract<IEnumerable<AreaSeatingMapContract>>>> GetMapAreaList(string seatingMapId)
     {
-        var data = MockDatabase.HallSeatingMaps.All
-            .FirstOrDefault(m => m.Id == seatingMapId)
-            ?.Areas.Select(a => a with {
-                Rows = ImmutableList<SeatingMapRowContract>.Empty
-            });
+        var data = await _entityRepo.TryGetHallSeatingMapWithoutSeats(seatingMapId);
         
         var reply = new ReplyContract<IEnumerable<AreaSeatingMapContract>>(
-            data, 
+            data?.Areas, 
             ServiceProcessMetadata.GetCombinedInfo()
         );
 
@@ -74,10 +72,10 @@ public class SeatMapController : ControllerBase
     [HttpGet("{seatingMapId}/area/{hallAreaId}")]
     [ProducesResponseType(200)]
     [ProducesResponseType(404)]
-    public ActionResult<ReplyContract<AreaSeatingMapContract>> GetMapArea(string seatingMapId, string hallAreaId)
+    public async Task<ActionResult<ReplyContract<AreaSeatingMapContract>>> GetMapArea(string seatingMapId, string hallAreaId)
     {
-        var data =  MockDatabase.HallSeatingMaps.All
-            .FirstOrDefault(m => m.Id == seatingMapId)
+        var hallSeatingMap = await _entityRepo.TryGetHallSeatingMapById(seatingMapId);
+        var data =  hallSeatingMap
             ?.Areas.FirstOrDefault(a => a.HallAreaId == hallAreaId);
         
         var reply = new ReplyContract<AreaSeatingMapContract>(

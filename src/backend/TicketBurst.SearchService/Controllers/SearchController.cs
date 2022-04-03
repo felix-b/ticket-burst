@@ -1,7 +1,11 @@
-﻿using System.Collections.Immutable;
+﻿#pragma warning disable CS1998
+
+using System.Collections.Immutable;
 using Microsoft.AspNetCore.Mvc;
 using TicketBurst.Contracts;
 using TicketBurst.SearchService.Contracts;
+using TicketBurst.SearchService.Integrations;
+using TicketBurst.SearchService.Logic;
 using TicketBurst.ServiceInfra;
 
 namespace TicketBurst.SearchService.Controllers;
@@ -19,22 +23,36 @@ public class EventSearchRequestContract
 [Route("search")]
 public class SearchController : ControllerBase
 {
-    public SearchController(ILogger<SearchController> logger)
+    private readonly ISearchEntityRepository _entityRepo;
+    private readonly EventSeatingStatusCache _seatingCache;
+
+    public SearchController(
+        ISearchEntityRepository entityRepo,
+        EventSeatingStatusCache seatingCache,
+        ILogger<SearchController> logger)
     {
+        _entityRepo = entityRepo;
+        _seatingCache = seatingCache;
     }
 
     [HttpGet]
     [ProducesResponseType(200)]
-    public ActionResult<ReplyContract<IEnumerable<EventSearchResultContract>>> Get(
+    public async Task<ActionResult<ReplyContract<IEnumerable<EventSearchResultContract>>>> Get(
         [FromQuery] EventSearchRequestContract request)
     {
         var query = BuildQuery();
         var maxResultCount = Math.Min(100, request.Count ?? 20); 
-        var results = query
+        var foundEvents = query
             .Take(maxResultCount)
-            .ToArray()
-            .Select(EnrichEventToSearchResult)
-            .ToArray();
+            .ToArray(); //TODO: async?
+            
+        var results = new List<EventSearchResultContract>();
+
+        foreach (var @event in foundEvents)
+        {
+            var result = await EnrichEventToSearchResult(@event);
+            results.Add(result);
+        }
 
         return ApiResult.Success(200, results);
 
@@ -50,7 +68,7 @@ public class SearchController : ControllerBase
 
         IQueryable<EventContract> BuildQuery()
         {
-            var query = MockDatabase.Events.All.AsQueryable();
+            var query = _entityRepo.CreateEventQuery();
 
             if (request.Selling == true)
             {
@@ -79,16 +97,16 @@ public class SearchController : ControllerBase
     [HttpGet("event/{id}")]
     [ProducesResponseType(200)]
     [ProducesResponseType(404)]
-    public ActionResult<ReplyContract<EventSearchFullDetailContract>> GetEventFullDetail(string id)
+    public async Task<ActionResult<ReplyContract<EventSearchFullDetailContract>>> GetEventFullDetail(string id)
     {
-        var @event = MockDatabase.Events.All.FirstOrDefault(e => e.Id == id);
+        var @event = await _entityRepo.TryGetEventById(id);
         if (@event == null)
         {
             return ApiResult.Error(404);
         }
 
-        var enrichedEvent = EnrichEventToSearchResult(@event);
-        var hallStatusCache = MockDatabase.EventSeatingStatusCache.Retrieve(@event.Id);
+        var enrichedEvent = await EnrichEventToSearchResult(@event);
+        var hallStatusCache = _seatingCache.Retrieve(@event.Id);
         var hallInfo = GetFullDetailHallInfo(@event, hallStatusCache, out _);
         var fullDetail = new EventSearchFullDetailContract(
             Event: enrichedEvent,
@@ -101,21 +119,21 @@ public class SearchController : ControllerBase
     [HttpGet("event/{eventId}/area/{areaId}")]
     [ProducesResponseType(200)]
     [ProducesResponseType(404)]
-    public ActionResult<ReplyContract<EventSearchAreaSeatingContract>> GetEventFullDetail(string eventId, string areaId)
+    public async Task<ActionResult<ReplyContract<EventSearchAreaSeatingContract>>> GetEventFullDetail(string eventId, string areaId)
     {
-        var @event = MockDatabase.Events.All.FirstOrDefault(e => e.Id == eventId);
+        var @event = await _entityRepo.TryGetEventById(eventId);
         if (@event == null)
         {
             return ApiResult.Error(404);
         }
         
-        var hallStatusCache = MockDatabase.EventSeatingStatusCache.Retrieve(@event.Id);
+        var hallStatusCache = _seatingCache.Retrieve(@event.Id);
         if (!hallStatusCache.SeatingByAreaId.ContainsKey(areaId))
         {
             return ApiResult.Error(404);
         }
         
-        var enrichedEvent = EnrichEventToSearchResult(@event);
+        var enrichedEvent = await EnrichEventToSearchResult(@event);
         var hallInfo = GetFullDetailHallInfo(@event, hallStatusCache, out var hallSeatingMap);
         var header = new EventSearchFullDetailContract(
             Event: enrichedEvent,
@@ -134,19 +152,19 @@ public class SearchController : ControllerBase
         return ApiResult.Success(200, reply);
     }
     
-    private EventSearchResultContract EnrichEventToSearchResult(EventContract @event)
+    private async Task<EventSearchResultContract> EnrichEventToSearchResult(EventContract @event)
     {
-        var venue = MockDatabase.Venues.All.First(v => v.Id == @event.VenueId);
+        var venue = await _entityRepo.GetVenueByIdOrThrow(@event.VenueId);
         var hall = venue.Halls[0];
-        var show = MockDatabase.Shows.All.First(s => s.Id == @event.ShowId);
-        var showType = MockDatabase.ShowTypes.All.First(t => t.Id == @event.ShowTypeId);
-        var genre = MockDatabase.Genres.All.First(g => g.Id == show.GenreId);
+        var show = await _entityRepo.GetShowByIdOrThrow(@event.ShowId);
+        var showType = await _entityRepo.GetShowTypeByIdOrThrow(@event.ShowTypeId);
+        var genre = await _entityRepo.GetGenreByIdOrThrow(show.GenreId);
         var troupeIds = @event.TroupeIds ?? show.TroupeIds;
         var troupes = troupeIds != null
-            ? MockDatabase.Troupes.All.Where(t => troupeIds.IndexOf(t.Id) >= 0).ToImmutableList()
+            ? (await _entityRepo.GetTroupesByIds(troupeIds)).ToListSync()
             : null;
-        var numbrOfSeatsLeft = (@event.IsOpenForSale
-            ? MockDatabase.EventSeatingStatusCache.Retrieve(@event.Id).AvailableCapacity
+        var numberOfSeatsLeft = (@event.IsOpenForSale
+            ? _seatingCache.Retrieve(@event.Id).AvailableCapacity
             : DateTime.UtcNow < @event.EventStartUtc
                 ? venue.DefaultCapacity
                 : 0);
@@ -170,14 +188,14 @@ public class SearchController : ControllerBase
             EventTitle: $"{show.Title} {@event.Title ?? string.Empty}".Trim(),
             EventDescription: @event.Description,
             PosterImageUrl: @event.PosterImageUrl ?? show.PosterImageUrl,
-            Troupes: troupes,
+            Troupes: troupes?.ToImmutableList(),
             SaleStartTime: @event.SaleStartUtc,
             EventStartTime: @event.EventStartUtc,
             DurationMinutes: @event.DurationMinutes,
             IsOpenForSale: @event.IsOpenForSale,
             MinPrice: @event.PriceList.PriceByLevelId.Values.Min(),
             MaxPrice: @event.PriceList.PriceByLevelId.Values.Max(),
-            NumberOfSeatsLeft: numbrOfSeatsLeft);
+            NumberOfSeatsLeft: numberOfSeatsLeft);
 
         return result;
     }
@@ -188,7 +206,7 @@ public class SearchController : ControllerBase
         out HallSeatingMapContract hallSeatingMap)
     {
         hallSeatingMap = 
-            MockDatabase.HallSeatingMaps.All.FirstOrDefault(m => m.Id == @event.HallSeatingMapId)
+            _entityRepo.TryGetHallSeatingMapByIdSync(@event.HallSeatingMapId)
             ?? throw new InvalidDataException($"Hall seating map [{@event.HallSeatingMapId}] for event [{@event.Id}] not found");
 
         var areaInfos = hallSeatingMap.Areas.Select(area => {

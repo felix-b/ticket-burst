@@ -1,6 +1,7 @@
 ﻿using System.Collections.Immutable;
 using Microsoft.AspNetCore.Mvc;
 using TicketBurst.Contracts;
+using TicketBurst.SearchService.Integrations;
 using TicketBurst.ServiceInfra;
 
 namespace TicketBurst.SearchService.Controllers;
@@ -9,18 +10,20 @@ namespace TicketBurst.SearchService.Controllers;
 [Route("venue")]
 public class VenueController : ControllerBase
 {
-    public VenueController(ILogger<VenueController> logger)
+    private readonly ISearchEntityRepository _entityRepo;
+
+    public VenueController(
+        ISearchEntityRepository entityRepo,
+        ILogger<VenueController> logger)
     {
+        _entityRepo = entityRepo;
     }
 
     [HttpGet]
     [ProducesResponseType(200)]
-    public ActionResult<ReplyContract<IEnumerable<VenueContract>>> Get()
+    public async Task<ActionResult<ReplyContract<IEnumerable<VenueContract>>>> Get()
     {
-        var data = MockDatabase.Venues.All
-            .Select(x => x with {
-                Halls = ImmutableList<HallContract>.Empty
-            });
+        var data  = (await _entityRepo.GetAllVenuesWithoutHalls()).ToListSync();
         
         var reply = new ReplyContract<IEnumerable<VenueContract>>(
             data, 
@@ -35,11 +38,10 @@ public class VenueController : ControllerBase
     [HttpGet("{id}/halls")]
     [ProducesResponseType(200)]
     [ProducesResponseType(404)]
-    public ActionResult<ReplyContract<IEnumerable<HallContract>>> GetHalls(string id)
+    public async Task<ActionResult<ReplyContract<IEnumerable<HallContract>>>> GetHalls(string id)
     {
-        var data =  MockDatabase.Venues.All
-            .FirstOrDefault(v => v.Id == id)
-            ?.Halls;
+        var venue = await _entityRepo.TryGetVenueById(id);
+        var data = venue?.Halls;
         
         var reply = new ReplyContract<IEnumerable<HallContract>>(
             data, 

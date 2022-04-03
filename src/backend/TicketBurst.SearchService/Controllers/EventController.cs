@@ -1,6 +1,7 @@
 ﻿using System.Collections.Immutable;
 using Microsoft.AspNetCore.Mvc;
 using TicketBurst.Contracts;
+using TicketBurst.SearchService.Integrations;
 using TicketBurst.ServiceInfra;
 
 namespace TicketBurst.SearchService.Controllers;
@@ -9,133 +10,85 @@ namespace TicketBurst.SearchService.Controllers;
 [Route("event")]
 public class EventController : ControllerBase
 {
-    public EventController(ILogger<EventController> logger)
+    private readonly ISearchEntityRepository _entityRepo;
+
+    public EventController(
+        ISearchEntityRepository entityRepo,
+        ILogger<EventController> logger)
     {
+        _entityRepo = entityRepo;
     }
 
     [HttpGet]
     [ProducesResponseType(200)]
-    public ActionResult<ReplyContract<IEnumerable<EventContract>>> Get()
+    public async Task<ActionResult<ReplyContract<IEnumerable<EventContract>>>> Get()
     {
-        var data = MockDatabase.Events.All;
-        
-        var reply = new ReplyContract<IEnumerable<EventContract>>(
-            data, 
-            ServiceProcessMetadata.GetCombinedInfo()
-        );
-
-        return new JsonResult(reply) {
-            StatusCode = 200
-        };
+        var data = await _entityRepo.GetAllEvents();
+        return ApiResult.Success(200, data.ToListSync());
     }
 
     [HttpGet("genre")]
     [ProducesResponseType(200)]
-    public ActionResult<ReplyContract<IEnumerable<GenreContract>>> GetGenres()
+    public async Task<ActionResult<ReplyContract<IEnumerable<GenreContract>>>> GetGenres()
     {
-        var data = MockDatabase.Genres.All;
-        
-        var reply = new ReplyContract<IEnumerable<GenreContract>>(
-            data, 
-            ServiceProcessMetadata.GetCombinedInfo()
-        );
-
-        return new JsonResult(reply) {
-            StatusCode = 200
-        };
+        var data = await _entityRepo.GetAllGenres();
+        return ApiResult.Success(200, data.ToListSync());
     }
 
     [HttpGet("showtype")]
     [ProducesResponseType(200)]
-    public ActionResult<ReplyContract<IEnumerable<ShowTypeContract>>> GetShowTypes()
+    public async Task<ActionResult<ReplyContract<IEnumerable<ShowTypeContract>>>> GetShowTypes()
     {
-        var data = MockDatabase.ShowTypes.All;
-        
-        var reply = new ReplyContract<IEnumerable<ShowTypeContract>>(
-            data, 
-            ServiceProcessMetadata.GetCombinedInfo()
-        );
-
-        return new JsonResult(reply) {
-            StatusCode = 200
-        };
+        var data = await _entityRepo.GetAllShowTypes();
+        return ApiResult.Success(200, data.ToListSync());
     }
 
     [HttpGet("show")]
     [ProducesResponseType(200)]
-    public ActionResult<ReplyContract<IEnumerable<ShowContract>>> GetShows()
+    public async Task<ActionResult<ReplyContract<IEnumerable<ShowContract>>>> GetShows()
     {
-        var data = MockDatabase.Shows.All;
-        
-        var reply = new ReplyContract<IEnumerable<ShowContract>>(
-            data, 
-            ServiceProcessMetadata.GetCombinedInfo()
-        );
-
-        return new JsonResult(reply) {
-            StatusCode = 200
-        };
+        var data = await _entityRepo.GetAllShows();
+        return ApiResult.Success(200, data.ToListSync());
     }
 
     [HttpGet("troupe")]
     [ProducesResponseType(200)]
-    public ActionResult<ReplyContract<IEnumerable<TroupeContract>>> GetTroupes()
+    public async Task<ActionResult<ReplyContract<IEnumerable<TroupeContract>>>> GetTroupes()
     {
-        var data = MockDatabase.Troupes.All;
-        
-        var reply = new ReplyContract<IEnumerable<TroupeContract>>(
-            data, 
-            ServiceProcessMetadata.GetCombinedInfo()
-        );
-
-        return new JsonResult(reply) {
-            StatusCode = 200
-        };
+        var data = await _entityRepo.GetAllTroupes();
+        return ApiResult.Success(200, data.ToListSync());
     }
 
     [HttpGet("{id}")]
     [ProducesResponseType(200)]
     [ProducesResponseType(404)]
-    public ActionResult<ReplyContract<EventContract>> GetEvent(string id)
+    public async Task<ActionResult<ReplyContract<EventContract>>> GetEvent(string id)
     {
-        var data = MockDatabase.Events.All
-            .FirstOrDefault(e => e.Id == id);
-        
-        var reply = new ReplyContract<EventContract>(
-            data, 
-            ServiceProcessMetadata.GetCombinedInfo()
-        );
-
-        return new JsonResult(reply) {
-            StatusCode = data != null ? 200 : 404
-        };
+        var data = await _entityRepo.TryGetEventById(id);
+        return data != null
+            ? ApiResult.Success(200, data)
+            : ApiResult.Error(404);
     }
 
     [HttpGet("{id}/areas")]
     [ProducesResponseType(200)]
     [ProducesResponseType(404)]
-    public ActionResult<ReplyContract<IEnumerable<HallAreaContract>>> GetEventAreas(string id)
+    public async Task<ActionResult<ReplyContract<IEnumerable<HallAreaContract>>>> GetEventAreas(string id)
     {
-        var data = FetchData();
+        var data = await FetchData();
+        return data != null
+            ? ApiResult.Success(200, data)
+            : ApiResult.Error(404);
         
-        var reply = new ReplyContract<IEnumerable<HallAreaContract>>(
-            data, 
-            ServiceProcessMetadata.GetCombinedInfo()
-        );
-
-        return new JsonResult(reply) {
-            StatusCode = data != null ? 200 : 404
-        };
-        
-        IEnumerable<HallAreaContract>? FetchData()
+        async Task<IEnumerable<HallAreaContract>?> FetchData()
         {
-            var @event = MockDatabase.Events.All.FirstOrDefault(e => e.Id == id);
+            var @event =  await _entityRepo.TryGetEventById(id);;
             if (@event == null)
             {
                 return null;
             }
             
-            var venue = MockDatabase.Venues.All.FirstOrDefault(v => v.Id == @event.VenueId);
+            var venue = await _entityRepo.TryGetVenueById(@event.VenueId);
             return venue?.Halls[0].Areas;
         }
     }
@@ -143,34 +96,22 @@ public class EventController : ControllerBase
     [HttpGet("{id}/area-seatmap/{hallAreaId}")]
     [ProducesResponseType(200)]
     [ProducesResponseType(404)]
-    public ActionResult<ReplyContract<AreaSeatingMapContract>> GetEventAreaSeatingMap(string id, string hallAreaId)
+    public async Task<ActionResult<ReplyContract<AreaSeatingMapContract>>> GetEventAreaSeatingMap(string id, string hallAreaId)
     {
-        var data = FetchData();
+        var data = await FetchData();
+        return data != null
+            ? ApiResult.Success(200, data)
+            : ApiResult.Error(404);
         
-        var reply = new ReplyContract<AreaSeatingMapContract>(
-            data, 
-            ServiceProcessMetadata.GetCombinedInfo()
-        );
-
-        return new JsonResult(reply) {
-            StatusCode = data != null ? 200 : 404
-        };
-        
-        AreaSeatingMapContract? FetchData()
+        async Task<AreaSeatingMapContract?> FetchData()
         {
-            var @event = MockDatabase.Events.All.FirstOrDefault(e => e.Id == id);
+            var @event = await _entityRepo.TryGetEventById(id);
             if (@event == null)
             {
                 return null;
             }
             
-            var venue = MockDatabase.Venues.All.FirstOrDefault(v => v.Id == @event.VenueId);
-            if (venue == null)
-            {
-                return null;
-            }
-
-            var seatingMap = MockDatabase.HallSeatingMaps.All.FirstOrDefault(m => m.Id == @event.HallSeatingMapId);
+            var seatingMap = await _entityRepo.TryGetHallSeatingMapById(@event.HallSeatingMapId);
             if (seatingMap == null)
             {
                 return null;

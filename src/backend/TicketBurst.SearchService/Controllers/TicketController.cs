@@ -1,6 +1,7 @@
 ﻿using System.Collections.Immutable;
 using Microsoft.AspNetCore.Mvc;
 using TicketBurst.Contracts;
+using TicketBurst.SearchService.Integrations;
 using TicketBurst.ServiceInfra;
 
 namespace TicketBurst.SearchService.Controllers;
@@ -9,20 +10,27 @@ namespace TicketBurst.SearchService.Controllers;
 [Route("ticket")]
 public class TicketController : ControllerBase
 {
+    private readonly ISearchEntityRepository _entityRepo;
+
+    public TicketController(ISearchEntityRepository entityRepo)
+    {
+        _entityRepo = entityRepo;
+    }
+
     [HttpPost("create")]
     [ProducesResponseType(200)]
     [ProducesResponseType(400)]
-    public ActionResult<ReplyContract<IEnumerable<TicketContract>>> CreateTickets(
+    public async Task<ActionResult<ReplyContract<IEnumerable<TicketContract>>>> CreateTickets(
         [FromBody] ReservationInfoContract reservation)
     {
-        var @event = MockDatabase.Events.All.FirstOrDefault(e => e.Id == reservation.EventId);
+        var @event = await _entityRepo.TryGetEventById(reservation.EventId);
         if (@event == null)
         {
             return ApiResult.Error(400, reason: "EventNotFound");
         }
 
-        var show = MockDatabase.Shows.All.First(s => s.Id == @event.ShowId);
-        var venue = MockDatabase.Venues.All.First(v => v.Id == @event.VenueId);
+        var show = await _entityRepo.GetShowByIdOrThrow(@event.ShowId);
+        var venue = await _entityRepo.GetVenueByIdOrThrow(@event.VenueId);
         var hall = venue.Halls[0];
         var hallArea = hall.Areas.FirstOrDefault(a => a.Id == reservation.HallAreaId);
         if (hallArea == null)
@@ -30,7 +38,7 @@ public class TicketController : ControllerBase
             return ApiResult.Error(400, reason: "AreaNotFound");
         }
         
-        var hallSeatingMap = MockDatabase.HallSeatingMaps.All.First(m => m.Id == @event.HallSeatingMapId);
+        var hallSeatingMap = await _entityRepo.GetHallSeatingMapByIdOrThrow(@event.HallSeatingMapId);
         var areaSeatingMap = hallSeatingMap.Areas.First(area => area.HallAreaId == reservation.HallAreaId);
 
         var tickets = new List<TicketContract>();
@@ -60,7 +68,7 @@ public class TicketController : ControllerBase
             var price = @event.PriceList.PriceByLevelId[priceLevel.Id];
             
             return new TicketContract(
-                Id: MockDatabase.MakeNewId(),
+                Id: _entityRepo.MakeNewId(),
                 EventId: @event.Id,
                 HallAreaId: hallArea.Id,
                 RowId: row.Id,

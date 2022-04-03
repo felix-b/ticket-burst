@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using TicketBurst.Contracts;
+using TicketBurst.SearchService.Integrations;
+using TicketBurst.SearchService.Logic;
 using TicketBurst.ServiceInfra;
 
 namespace TicketBurst.SearchService.Controllers;
@@ -8,51 +10,53 @@ namespace TicketBurst.SearchService.Controllers;
 [Route("notify")]
 public class NotificationController : ControllerBase
 {
-    public NotificationController(ILogger<NotificationController> logger)
+    private readonly ISearchEntityRepository _entityRepo;
+    private readonly EventSeatingStatusCache _eventSeatingCache;
+
+    public NotificationController(
+        ISearchEntityRepository entityRepo,
+        EventSeatingStatusCache eventSeatingCache,
+        ILogger<NotificationController> logger)
     {
+        _entityRepo = entityRepo;
+        _eventSeatingCache = eventSeatingCache;
     }
 
     [HttpPost("event-area-update")]
     [ProducesResponseType(200)]
     [ProducesResponseType(400)]
-    public ActionResult<ReplyContract<string>> HandleEventAreaUpdateNotification(
+    public async Task<ActionResult<ReplyContract<string>>> HandleEventAreaUpdateNotification(
         [FromBody] EventAreaUpdateNotificationContract notification)
     {
-        var isValid = ValidateNotification(out var validationResult);
+        var validationErrorCode = await ValidateNotification();
+        var isValid = string.IsNullOrEmpty(validationErrorCode); 
+        
         if (isValid)
         {
-            MockDatabase.EventSeatingStatusCache.Update(notification);
+            _eventSeatingCache.Update(notification);
         }
-        
-        var reply = new ReplyContract<string>(
-            validationResult, 
-            ServiceProcessMetadata.GetCombinedInfo()
-        );
 
-        return new JsonResult(reply) {
-            StatusCode = isValid ? 200 : 400
-        };
+        return isValid
+            ? ApiResult.Success(200, "OK")
+            : ApiResult.Error(400, validationErrorCode);
 
-        bool ValidateNotification(out string resultCode)
+        async Task<string> ValidateNotification()
         {
             var timeSincePublish = DateTime.UtcNow.Subtract(notification.PublishedAtUtc);
             
             if (string.IsNullOrWhiteSpace(notification.Id) || string.IsNullOrWhiteSpace(notification.EventId) || string.IsNullOrWhiteSpace(notification.HallAreaId))
             {
-                resultCode = "RequiredFieldsMissing";
-                return false;
+                return "RequiredFieldsMissing";
             }
             
             if (notification.SequenceNo <= 0)
             {
-                resultCode = "BadSequenceNo";
-                return false;
+                return "BadSequenceNo";
             }
             
             if (timeSincePublish < TimeSpan.Zero || timeSincePublish > TimeSpan.FromMinutes(1))
             {
-                resultCode = "BadTiming";
-                return false;
+                return "BadTiming";
             }
 
             if (notification.TotalCapacity <= 0 || 
@@ -60,30 +64,26 @@ public class NotificationController : ControllerBase
                 notification.AvailableCapacity < 0 || 
                 notification.AvailableCapacity > notification.TotalCapacity)
             {
-                resultCode = "BadCounterValues";
-                return false;
+                return "BadCounterValues";
             }
 
-            var @event = MockDatabase.Events.All.FirstOrDefault(e => e.Id == notification.EventId);
+            var @event = await _entityRepo.TryGetEventById(notification.EventId);
             if (@event == null)
             {
-                resultCode = "EventNotFound";
-                return false;
+                return "EventNotFound";
             }
 
-            var area = MockDatabase.Venues.All
-                .FirstOrDefault(v => v.Id == @event.VenueId)
-                ?.Halls[0]
+            var venue = await _entityRepo.TryGetVenueById(@event.VenueId);
+            var area = venue?
+                .Halls[0]
                 .Areas.FirstOrDefault(a => a.Id == notification.HallAreaId);
                 
             if (area == null)
             {
-                resultCode = "AreaNotFound";
-                return false;
+                return "AreaNotFound";
             }
 
-            resultCode = "OK";
-            return true;
+            return string.Empty;
         }
     }
 }
