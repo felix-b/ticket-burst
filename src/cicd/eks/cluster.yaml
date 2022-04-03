@@ -1,0 +1,63 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: ticketburst-cluster
+  region: eu-south-1
+
+managedNodeGroups:
+  - name: ticketburst-search-nodegroup
+    instanceType: t3.medium
+    minSize: 2
+    maxSize: 4
+    desiredCapacity: 2
+    volumeSize: 20
+    ssh:
+      allow: true
+    labels:
+      app: ticketburst
+      appsvc: ticketburst-search
+    tags:
+      app: ticketburst
+      appsvc: ticketburst-search
+  - name: ticketburst-reservation-nodegroup
+    instanceType: t3.medium
+    minSize: 2
+    maxSize: 20
+    desiredCapacity: 2
+    volumeSize: 20
+    ssh:
+      allow: true
+    labels:
+      app: ticketburst
+      appsvc: ticketburst-reservation
+    tags:
+      app: ticketburst
+      appsvc: ticketburst-reservation
+  - name: ticketburst-checkout-nodegroup
+    instanceType: t3.medium
+    minSize: 1
+    maxSize: 10
+    desiredCapacity: 1
+    volumeSize: 20
+    ssh:
+      allow: true
+    labels:
+      app: ticketburst
+      appsvc: ticketburst-checkout
+    tags:
+      app: ticketburst
+      appsvc: ticketburst-checkout
+
+gitops:
+  flux:
+    gitProvider: github      # required. options are github, gitlab or git
+    flags:                   # required. arbitrary map[string]string for all flux args.
+    # these args are not controlled by eksctl. see https://fluxcd.io/docs/get-started/ for all available flags
+      owner: "felix-b"
+      repository: "ticket-burst-fluxcd"
+      personal: "true"
+      private: "true"
+      branch: "main"
+      namespace: "flux-system"
+      path: "clusters/demo"
