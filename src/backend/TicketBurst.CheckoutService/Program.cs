@@ -6,7 +6,10 @@ using TicketBurst.ServiceInfra;
 
 Console.WriteLine("TicketBurst Checkout Service starting.");
 
-var enityRepository = new MySqlCheckoutEntityRepository();// new InMemoryCheckoutEntityRepository();
+var entityRepository = args.Contains("--mock-db")
+    ? UseMockDatabase()
+    : UseRealDatabase();
+
 var mockEmailGateway = new MockEmailGatewayPlugin();
 var mockPaymentGateway = new MockPaymentGatewayPlugin();
 var mockStorageGateway = new MockStorageGatewayPlugin();
@@ -22,7 +25,7 @@ var httpEndpoint = ServiceBootstrap.CreateHttpEndpoint(
     listenPortNumber: 3003,
     commandLineArgs: args,
     configure: builder => {
-        builder.Services.AddSingleton<ICheckoutEntityRepository>(enityRepository);
+        builder.Services.AddSingleton<ICheckoutEntityRepository>(entityRepository);
         builder.Services.AddSingleton<IMessagePublisher<OrderStatusUpdateNotificationContract>>(orderStatusUpdatePublisher);
         builder.Services.AddSingleton<ISagaEnginePlugin>(mockSagaEngine);
         builder.Services.AddSingleton<IStorageGatewayPlugin>(mockStorageGateway);
@@ -32,3 +35,14 @@ var httpEndpoint = ServiceBootstrap.CreateHttpEndpoint(
 
 httpEndpoint.Run();
 
+ICheckoutEntityRepository UseRealDatabase()
+{
+    Console.WriteLine("Using MYSQL DB.");
+    return new MySqlCheckoutEntityRepository();
+}
+
+ICheckoutEntityRepository UseMockDatabase()
+{
+    Console.WriteLine("Using MOCK DB.");
+    return new InMemoryCheckoutEntityRepository();
+}

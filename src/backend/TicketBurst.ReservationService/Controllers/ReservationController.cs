@@ -97,7 +97,7 @@ public class ReservationController : ControllerBase
             SeatIds: record.SeatIds);
         return ApiResult.Success(200, info);
     }
-
+    
     private SeatReservationReplyContract? EncryptCheckoutToken(SeatReservationReplyContract? reply)
     {
         if (reply == null)

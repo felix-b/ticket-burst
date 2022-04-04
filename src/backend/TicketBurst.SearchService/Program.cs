@@ -6,22 +6,10 @@ using TicketBurst.SearchService.Logic;
 using TicketBurst.ServiceInfra;
 
 Console.WriteLine("TicketBurst Search Service starting.");
-// Console.WriteLine(
-//     $"Mock DB: {MockDatabase.Venues.All.Count} venues,  " +
-//     $"{MockDatabase.HallSeatingMaps.All.Count} seating maps, " +
-//     $"{MockDatabase.Events.All.Count} events.");
 
-MockDatabase.UseObjectId();
-
-var searchEntityRepo = new MongoDbSearchEntityRepository();// new InMemorySearchEntityRepository();
-if (searchEntityRepo.ShouldInsertInitialData())
-{
-    Console.WriteLine(
-        $"Detected empty DB! Inserting data: {MockDatabase.Venues.All.Count} venues, " +
-        $"{MockDatabase.HallSeatingMaps.All.Count} seating maps, " +
-        $"{MockDatabase.Events.All.Count} events.");
-    searchEntityRepo.InsertInitialData();
-}
+var searchEntityRepo = args.Contains("--mock-db")
+    ? UseMockDatabase()
+    : UseRealDatabase();
     
 var eventSeatingCache = new EventSeatingStatusCache(searchEntityRepo);
 
@@ -42,3 +30,31 @@ var httpEndpoint = ServiceBootstrap.CreateHttpEndpoint(
     });
 
 httpEndpoint.Run();
+
+ISearchEntityRepository UseMockDatabase()
+{
+    Console.WriteLine(
+        $"Using MOCK DB: {MockDatabase.Venues.All.Count} venues,  " +
+        $"{MockDatabase.HallSeatingMaps.All.Count} seating maps, " +
+        $"{MockDatabase.Events.All.Count} events.");
+    return new InMemorySearchEntityRepository();
+}
+
+ISearchEntityRepository UseRealDatabase()
+{
+    Console.WriteLine($"Using MONGODB");
+    MockDatabase.UseObjectId();
+    
+    var repo = new MongoDbSearchEntityRepository();
+    if (repo.ShouldInsertInitialData())
+    {
+        Console.WriteLine(
+            $"Detected empty DB! Inserting data: {MockDatabase.Venues.All.Count} venues, " +
+            $"{MockDatabase.HallSeatingMaps.All.Count} seating maps, " +
+            $"{MockDatabase.Events.All.Count} events.");
+        repo.InsertInitialData();
+    }
+
+    return repo;
+}
+

@@ -1,4 +1,6 @@
-﻿using System.Collections.Immutable;
+﻿#pragma warning disable CS1998
+
+using System.Collections.Immutable;
 using System.Net.Mail;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
