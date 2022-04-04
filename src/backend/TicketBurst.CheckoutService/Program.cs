@@ -6,6 +6,7 @@ using TicketBurst.ServiceInfra;
 
 Console.WriteLine("TicketBurst Checkout Service starting.");
 
+var enityRepository = new InMemoryCheckoutEntityRepository();
 var mockEmailGateway = new MockEmailGatewayPlugin();
 var mockPaymentGateway = new MockPaymentGatewayPlugin();
 var mockStorageGateway = new MockStorageGatewayPlugin();
@@ -21,6 +22,7 @@ var httpEndpoint = ServiceBootstrap.CreateHttpEndpoint(
     listenPortNumber: 3003,
     commandLineArgs: args,
     configure: builder => {
+        builder.Services.AddSingleton<ICheckoutEntityRepository>(enityRepository);
         builder.Services.AddSingleton<IMessagePublisher<OrderStatusUpdateNotificationContract>>(orderStatusUpdatePublisher);
         builder.Services.AddSingleton<ISagaEnginePlugin>(mockSagaEngine);
         builder.Services.AddSingleton<IStorageGatewayPlugin>(mockStorageGateway);

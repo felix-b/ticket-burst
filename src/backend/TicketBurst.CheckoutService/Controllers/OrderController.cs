@@ -13,19 +13,22 @@ namespace TicketBurst.CheckoutService.Controllers;
 [Route("order")]
 public class OrderController : ControllerBase
 {
+    private readonly ICheckoutEntityRepository _entityRepo;
     private readonly IMessagePublisher<OrderStatusUpdateNotificationContract> _statusUpdatePublisher;
 
     public OrderController(
+        ICheckoutEntityRepository entityRepo,
         IMessagePublisher<OrderStatusUpdateNotificationContract> statusUpdatePublisher)
     {
+        _entityRepo = entityRepo;
         _statusUpdatePublisher = statusUpdatePublisher;
     }
     
     [HttpGet]
     [ProducesResponseType(200)]
-    public ActionResult<ReplyContract<IEnumerable<OrderContract>>> Get()
+    public async Task<ActionResult<ReplyContract<IEnumerable<OrderContract>>>> Get()
     {
-        var data = MockDatabase.Orders.GetTop(20);
+        var data = await _entityRepo.GetMostRecentOrders(20);
         return ApiResult.Success(200, data);
     }
 
@@ -46,7 +49,7 @@ public class OrderController : ControllerBase
             return ApiResult.Error(400, "BadPaymentToken");
         }
 
-        var order = await MockDatabase.Orders.TryGetByNumber(request.OrderNumber);
+        var order = await _entityRepo.TryGetOrderByNumber(request.OrderNumber);
         if (order == null)
         {
             return ApiResult.Error(400, "OrderNotFound");
@@ -55,17 +58,18 @@ public class OrderController : ControllerBase
         var updatedOrder = order;
         try
         {
-            await MockDatabase.Orders.Update(request.OrderNumber!, oldOrder => {
-                if (oldOrder.Status != OrderStatus.CompletionInProgress)
-                {
-                    throw new InvalidOrderStatusException();
-                }
-                updatedOrder = oldOrder with {
-                    Status = request.OrderStatus,
-                    PaymentToken = request.PaymentToken
-                };
-                return updatedOrder;
-            });
+            await _entityRepo.UpdateOrderPaymentStatus(request.OrderNumber!, request.OrderStatus, request.PaymentToken);
+            // await MockDatabase.Orders.Update(request.OrderNumber!, oldOrder => {
+            //     if (oldOrder.Status != OrderStatus.CompletionInProgress)
+            //     {
+            //         throw new InvalidOrderStatusException();
+            //     }
+            //     updatedOrder = oldOrder with {
+            //         Status = request.OrderStatus,
+            //         PaymentToken = request.PaymentToken
+            //     };
+            //     return updatedOrder;
+            // });
         }
         catch (InvalidOrderStatusException)
         {
@@ -73,7 +77,7 @@ public class OrderController : ControllerBase
         }
 
         _statusUpdatePublisher.Publish(new OrderStatusUpdateNotificationContract(
-            Id: MockDatabase.MakeNewId(),
+            Id: _entityRepo.MakeNewId(),
             CreatedAtUtc: DateTime.UtcNow,
             UpdatedOrder: updatedOrder
         ));

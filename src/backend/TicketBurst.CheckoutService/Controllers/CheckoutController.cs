@@ -17,20 +17,23 @@ public class CheckoutController : ControllerBase
     private static readonly string __reasonBadEmailAddress = "BadEmailAddress";
     
     private readonly IDataProtector _checkoutTokenProtector;
+    private readonly ICheckoutEntityRepository _entityRepo;
     private readonly IPaymentGatewayPlugin _paymentPlugin;
     private readonly ISagaEnginePlugin _sagaEngine;
     private readonly IMessagePublisher<OrderStatusUpdateNotificationContract> _statusUpdatePublisher;
 
     public CheckoutController(
         IDataProtectionProvider protectionProvider, 
+        ICheckoutEntityRepository entityRepo,
         IPaymentGatewayPlugin paymentPlugin,
         ISagaEnginePlugin sagaEngine,
         IMessagePublisher<OrderStatusUpdateNotificationContract> statusUpdatePublisher)
     {
+        _checkoutTokenProtector = protectionProvider.CreateProtector(DataProtectionPurpose.CheckoutToken);
+        _entityRepo = entityRepo;
         _paymentPlugin = paymentPlugin;
         _sagaEngine = sagaEngine;
         _statusUpdatePublisher = statusUpdatePublisher;
-        _checkoutTokenProtector = protectionProvider.CreateProtector(DataProtectionPurpose.CheckoutToken);
     }
 
     [HttpPost("begin")]
@@ -61,14 +64,18 @@ public class CheckoutController : ControllerBase
             return ApiResult.Error(400, "TicketsNotAvailable");
         }
 
-        var order = await CreateOrder();
-        if (!isPreviewMode)
+        var previewOrder = await CreateOrder();
+        var insertedOrder = !isPreviewMode
+            ? await _entityRepo.InsertOrder(previewOrder)
+            : null;
+                
+        if (insertedOrder != null)
         {
-            await MockDatabase.Orders.Insert(order);
-            await _sagaEngine.CreateOrderCompletionWorkflow(order);
+            await _sagaEngine.CreateOrderCompletionWorkflow(insertedOrder);
         }
-        
-        return ApiResult.Success(200, order with {
+
+        var orderToReturn = insertedOrder ?? previewOrder;
+        return ApiResult.Success(200, orderToReturn with {
             ReservationId = string.Empty
         });
         
@@ -154,7 +161,7 @@ public class CheckoutController : ControllerBase
         {
             var orderNumber = isPreviewMode 
                 ? 0 
-                : MockDatabase.OrderNumberCounter.TakeNextOrderNumber();
+                : _entityRepo.TakeNextOrderNumber();
             var orderDescription =
                 $"{tickets!.Count} Tickets to ${tickets[0].ShowTitle} {tickets[0].EventTitle}".Trim();
 

@@ -44,7 +44,3 @@ public class NotificationController : ControllerBase
         return ApiResult.Success(200, "OK");
     }
 }
-
-public class InvalidOrderStatusException : Exception
-{
-}

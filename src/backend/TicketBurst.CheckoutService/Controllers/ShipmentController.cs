@@ -11,11 +11,16 @@ namespace TicketBurst.CheckoutService.Controllers;
 [Route("shipment")]
 public class ShipmentController : ControllerBase
 {
+    private readonly ICheckoutEntityRepository _entityRepo;
     private readonly IEmailGatewayPlugin _emailGateway;
     private readonly IStorageGatewayPlugin _storageGateway;
 
-    public ShipmentController(IEmailGatewayPlugin emailGateway, IStorageGatewayPlugin storageGateway)
+    public ShipmentController(
+        ICheckoutEntityRepository entityRepo,
+        IEmailGatewayPlugin emailGateway, 
+        IStorageGatewayPlugin storageGateway)
     {
+        _entityRepo = entityRepo;
         _emailGateway = emailGateway;
         _storageGateway = storageGateway;
     }
@@ -27,7 +32,7 @@ public class ShipmentController : ControllerBase
     public async Task<ActionResult<ReplyContract<string>>> ShipTickets(
         [FromBody] ShipTicketsRequest request)
     {
-        var order = await MockDatabase.Orders.TryGetByNumber(request.OrderNumber);
+        var order = await _entityRepo.TryGetOrderByNumber(request.OrderNumber);
         if (order == null)
         {
             return ApiResult.Error(400, "OrderNotFound");
