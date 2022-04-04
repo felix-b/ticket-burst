@@ -75,6 +75,23 @@ public class EventSeatingStatusCache
         }
     }
 
+    public async Task EnsureEventAreaTrusted(string eventId, string hallAreaId)
+    {
+        var cachedEvent = Retrieve(eventId);
+        
+        if (cachedEvent.SeatingByAreaId.TryGetValue(hallAreaId, out var cachedArea))
+        {
+            var notification = await ServiceClient.HttpGetJson<EventAreaUpdateNotificationContract>(
+                ServiceName.Reservation,
+                path: new[] { "reservation", "pull-update", eventId, hallAreaId });
+
+            if (notification != null)
+            {
+                Update(notification);
+            }
+        }
+    }
+
     private EventSeatingCacheContract CreateNewEventEntry(string eventId)
     {
         var @event = _entityRepo.GetEventByIdOrThrowSync(eventId);

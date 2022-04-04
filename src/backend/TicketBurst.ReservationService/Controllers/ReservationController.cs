@@ -97,6 +97,29 @@ public class ReservationController : ControllerBase
             SeatIds: record.SeatIds);
         return ApiResult.Success(200, info);
     }
+
+    [HttpGet("pull-update/{eventId}/{areaId}")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(404)]
+    public async Task<ActionResult<ReplyContract<EventAreaUpdateNotificationContract>>> PullEventAreaUpdateNotification(
+        string eventId,
+        string areaId)
+    {
+        if (string.IsNullOrWhiteSpace(eventId) || string.IsNullOrWhiteSpace(areaId))
+        {
+            return ApiResult.Error(400);
+        }
+        
+        var actor = await _actorEngine.GetActor(eventId, areaId);
+        if (actor == null)
+        {
+            return ApiResult.Error(404);
+        }
+
+        var notification = actor.GetUpdateNotification();
+        return ApiResult.Success(200, notification);
+    }
     
     private SeatReservationReplyContract? EncryptCheckoutToken(SeatReservationReplyContract? reply)
     {

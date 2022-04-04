@@ -80,13 +80,15 @@ public class SearchController : ControllerBase
     [HttpGet("event/{eventId}/area/{areaId}")]
     [ProducesResponseType(200)]
     [ProducesResponseType(404)]
-    public async Task<ActionResult<ReplyContract<EventSearchAreaSeatingContract>>> GetEventFullDetail(string eventId, string areaId)
+    public async Task<ActionResult<ReplyContract<EventSearchAreaSeatingContract>>> GetEventAreaFullDetail(string eventId, string areaId)
     {
         var @event = await _entityRepo.TryGetEventById(eventId);
         if (@event == null)
         {
             return ApiResult.Error(404);
         }
+
+        await _seatingCache.EnsureEventAreaTrusted(eventId, areaId);
         
         var hallStatusCache = _seatingCache.Retrieve(@event.Id);
         if (!hallStatusCache.SeatingByAreaId.ContainsKey(areaId))
@@ -101,7 +103,7 @@ public class SearchController : ControllerBase
             Hall: hallInfo,
             PriceList: @event.PriceList);
 
-        var areaSeatingMapWithStatus = GetAreaSeatingMapWithStatus(hallSeatingMap, hallStatusCache, areaId);
+        var areaSeatingMapWithStatus = GetAreaSeatingMapWithStatus(eventId, areaId, hallSeatingMap, hallStatusCache);
         var reply = new EventSearchAreaSeatingContract(
             Header: header,
             PriceLevels: hallSeatingMap.PriceLevels,
@@ -222,9 +224,10 @@ public class SearchController : ControllerBase
     }
 
     private AreaSeatingMapContract GetAreaSeatingMapWithStatus(
+        string eventId,
+        string hallAreaId,
         HallSeatingMapContract hallSeatingMap,
-        EventSeatingCacheContract hallStatusCache, 
-        string hallAreaId)
+        EventSeatingCacheContract hallStatusCache)
     {
         var areaStatusCache = hallStatusCache.SeatingByAreaId[hallAreaId];
         var areaSeatingMap = hallSeatingMap.Areas.First(area => area.HallAreaId == hallAreaId); //TODO: faster lookup?
