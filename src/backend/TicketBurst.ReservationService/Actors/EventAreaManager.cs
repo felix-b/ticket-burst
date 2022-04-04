@@ -140,22 +140,26 @@ public class EventAreaManager
                 .Where(entry => entry.LastRecord?.Action == ReservationAction.TemporarilyReserve)
                 .Where(isReservationExpired)
                 .ToList();
-            
-            var record = new ReservationJournalRecord(
-                Id: _entityRepo.MakeNewId(),
-                CreatedAtUtc: now,
-                EventId: EventId,
-                HallAreaId: AreaId,
-                HallSeatingMapId: _seatingMapId,
-                SequenceNo: Interlocked.Increment(ref _lastJournalSequenceNo),
-                SeatIds: entriesToRelease.Select(entry => entry.Seat.Id).ToImmutableList(),
-                Action: ReservationAction.ReleasePerTimeout,
-                ResultStatus: SeatStatus.Available);
-            ApplyJournalRecord(record);
 
-            entriesToRelease.ForEach(entry => {
-                Console.WriteLine($"EAM[{EventId}/{AreaId}]: seat[{entry.Seat.Id}] temporary reservation expired, released.");
-            });
+            if (entriesToRelease.Count > 0)
+            {
+                var record = new ReservationJournalRecord(
+                    Id: _entityRepo.MakeNewId(),
+                    CreatedAtUtc: now,
+                    EventId: EventId,
+                    HallAreaId: AreaId,
+                    HallSeatingMapId: _seatingMapId,
+                    SequenceNo: Interlocked.Increment(ref _lastJournalSequenceNo),
+                    SeatIds: entriesToRelease.Select(entry => entry.Seat.Id).ToImmutableList(),
+                    Action: ReservationAction.ReleasePerTimeout,
+                    ResultStatus: SeatStatus.Available);
+                ApplyJournalRecord(record);
+
+                entriesToRelease.ForEach(entry => {
+                    Console.WriteLine(
+                        $"EAM[{EventId}/{AreaId}]: seat[{entry.Seat.Id}] temporary reservation expired, released.");
+                });
+            }
         }
     }
 

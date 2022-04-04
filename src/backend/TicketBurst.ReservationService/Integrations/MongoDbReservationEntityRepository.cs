@@ -1,4 +1,5 @@
 ﻿using System.Collections.Immutable;
+using System.Text.Json;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Conventions;
 using MongoDB.Driver;
@@ -55,6 +56,7 @@ public class MongoDbReservationEntityRepository : IReservationEntityRepository
     public void AppendJournalEntry(ReservationJournalRecord record)
     {
         var recordForDb = new ReservationJournalRecordForDb(record);
+        Console.WriteLine($"MongoDbReservationEntityRepository::AppendJournalEntry> {JsonSerializer.Serialize(recordForDb)}");
         _journal.InsertOne(recordForDb);
     }
 
