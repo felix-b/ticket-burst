@@ -61,3 +61,4 @@ gitops:
       branch: "main"
       namespace: "flux-system"
       path: "clusters/demo"
+      components-extra: "image-reflector-controller,image-automation-controller"

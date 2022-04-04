@@ -1,7 +1,7 @@
 #
 # STAGE 1 - BUILD
 #
-FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:6.0.201-bullseye-slim-amd64 AS build
 
 # copy sources
 WORKDIR /src
@@ -23,7 +23,7 @@ RUN dotnet publish -c Release -r linux-x64
 # RUN apk add bash icu-libs krb5-libs libgcc libintl libssl1.1 libstdc++ zlib
 # RUN apk add libgdiplus --repository https://dl-3.alpinelinux.org/alpine/edge/testing/
 
-FROM mcr.microsoft.com/dotnet/aspnet:6.0
+FROM mcr.microsoft.com/dotnet/aspnet:6.0.3-bullseye-slim-amd64
 #FROM mcr.microsoft.com/dotnet/aspnet:6.0-alpine3.14
 
 RUN apt-get -qq update
