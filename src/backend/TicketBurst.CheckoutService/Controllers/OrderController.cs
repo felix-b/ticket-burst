@@ -55,7 +55,6 @@ public class OrderController : ControllerBase
             return ApiResult.Error(400, "OrderNotFound");
         }
 
-        var updatedOrder = order;
         try
         {
             await _entityRepo.UpdateOrderPaymentStatus(request.OrderNumber!, request.OrderStatus, request.PaymentToken);
@@ -76,6 +75,11 @@ public class OrderController : ControllerBase
             return ApiResult.Error(409, "InvalidOrderState");
         }
 
+        var updatedOrder = order with {
+            Status = request.OrderStatus,
+            PaymentToken = request.PaymentToken
+        };
+        
         _statusUpdatePublisher.Publish(new OrderStatusUpdateNotificationContract(
             Id: _entityRepo.MakeNewId(),
             CreatedAtUtc: DateTime.UtcNow,

@@ -178,6 +178,7 @@ export const TwoStepCheckoutForm = (props: {
             customerEmail: data.emailAddress            
         }
         const orderWithPaymentIntent = await ServiceClient.beginCheckout(request)
+        console.log('TwoStepCheckoutForm> orderWithPaymentIntent>', orderWithPaymentIntent)
         setPersonalData(data)
         setPaymentToken(orderWithPaymentIntent.paymentToken)
     }

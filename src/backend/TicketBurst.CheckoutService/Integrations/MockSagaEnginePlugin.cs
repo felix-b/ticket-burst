@@ -14,7 +14,7 @@ public class MockSagaEnginePlugin : ISagaEnginePlugin
     {
         Console.WriteLine($"MockSagaEnginePlugin> CREATE order[{order.OrderNumber}]");
         
-        var paymentCompletion = new TaskCompletionSource<OrderStatus>();
+        var paymentCompletion = new TaskCompletionSource<PaymentCompletionEvent>();
         var workflow = RunWorkflow(order, paymentCompletion.Task);
         var entry = new WorkflowEntry(
             Order: order,
@@ -45,23 +45,27 @@ public class MockSagaEnginePlugin : ISagaEnginePlugin
 
             Console.WriteLine($"MockSagaEnginePlugin> --> OK");
             var entry = _entryByOrderNumber[orderNumber];
-            entry.PaymentCompletion.SetResult(orderStatus);
+            var paymentEvent = new PaymentCompletionEvent(orderNumber, orderStatus, paymentToken);
+            entry.PaymentCompletion.SetResult(paymentEvent);
         }
 
         return Task.Delay(TimeSpan.FromMilliseconds(100));
     }
     
-    private async Task RunWorkflow(OrderContract order, Task<OrderStatus> paymentCompletion)
+    private async Task RunWorkflow(OrderContract order, Task<PaymentCompletionEvent> paymentCompletion)
     {
         Console.WriteLine($"MockSagaEnginePlugin::Workflow[{order.OrderNumber}]> STARTING");
 
-        var orderStatus = await paymentCompletion;
+        var paymentEvent = await paymentCompletion;
 
-        Console.WriteLine($"MockSagaEnginePlugin::Workflow[{order.OrderNumber}]> PAYMENT FINISHED [{orderStatus}], PROCEEDING");
+        Console.WriteLine($"MockSagaEnginePlugin::Workflow[{order.OrderNumber}]> PAYMENT FINISHED [{paymentEvent.OrderNumber}], PROCEEDING");
         
         await Task.Delay(TimeSpan.FromMilliseconds(100));
 
-        var updateRequest = new UpdateOrderStatusRequest(order.OrderNumber, orderStatus, order.PaymentToken);
+        var updateRequest = new UpdateOrderStatusRequest(
+            paymentEvent.OrderNumber, 
+            paymentEvent.OrderStatus, 
+            paymentEvent.PaymentToken);
         await ServiceClient.HttpPostJson<string>(
             ServiceName.Checkout,
             path: new[] { "order", "update-status" },
@@ -69,7 +73,7 @@ public class MockSagaEnginePlugin : ISagaEnginePlugin
 
         Console.WriteLine($"MockSagaEnginePlugin::Workflow[{order.OrderNumber}]> NOTIFICATION PUBLISHED");
         
-        if (orderStatus == OrderStatus.Completed)
+        if (paymentEvent.OrderStatus == OrderStatus.Completed)
         {
             Console.WriteLine($"MockSagaEnginePlugin::Workflow[{order.OrderNumber}]> SENDING SHIPPING REQUEST");
 
@@ -90,7 +94,13 @@ public class MockSagaEnginePlugin : ISagaEnginePlugin
     private record WorkflowEntry(
         OrderContract Order,
         Task Workflow,
-        TaskCompletionSource<OrderStatus> PaymentCompletion)
+        TaskCompletionSource<PaymentCompletionEvent> PaymentCompletion)
     {
     }
+
+    private record PaymentCompletionEvent(
+        uint OrderNumber,
+        OrderStatus OrderStatus,
+        string PaymentToken
+    );
 }

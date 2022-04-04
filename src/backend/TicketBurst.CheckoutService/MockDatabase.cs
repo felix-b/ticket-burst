@@ -48,10 +48,10 @@ public static class MockDatabase
             }
         }
 
-        public static async Task<bool> Update(uint orderNumber, Func<OrderContract, OrderContract> update)
+        public static async Task<OrderContract> Update(uint orderNumber, Func<OrderContract, OrderContract> update)
         {
             await Task.Delay(TimeSpan.FromMilliseconds(100));
-            var result = false;
+            OrderContract? result = null;
             
             lock (__syncRoot)
             {
@@ -59,7 +59,11 @@ public static class MockDatabase
                 {
                     var newOrder = update(oldOrder!);
                     __orderByNumber = __orderByNumber.SetItem(orderNumber, newOrder);
-                    result = true;
+                    result = newOrder;
+                }
+                else
+                {
+                    throw new KeyNotFoundException($"Order [{orderNumber}] not found");
                 }
             }
 

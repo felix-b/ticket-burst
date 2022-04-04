@@ -33,18 +33,39 @@ public class InMemoryCheckoutEntityRepository : ICheckoutEntityRepository
         return MockDatabase.Orders.TryGetByNumber(orderNumber);
     }
 
-    public async Task UpdateOrderPaymentStatus(uint orderNumber, OrderStatus newStatus, string newPaymentToken)
+    public async Task<OrderContract> UpdateOrderPaymentStatus(uint orderNumber, OrderStatus newStatus, string newPaymentToken)
     {
-        await MockDatabase.Orders.Update(orderNumber!, oldOrder => {
+        var result = await MockDatabase.Orders.Update(orderNumber!, oldOrder => {
             if (oldOrder.Status != OrderStatus.CompletionInProgress)
             {
-                throw new InvalidOrderStatusException();
+                throw new InvalidOrderStatusException(
+                    $"Expected order [{orderNumber}] in status [{OrderStatus.CompletionInProgress}]");
             }
             var updatedOrder = oldOrder with {
                 Status = newStatus,
-                PaymentToken = newPaymentToken
+                PaymentToken = newPaymentToken,
+                PaymentReceivedUtc = DateTime.UtcNow
             };
             return updatedOrder;
         });
+
+        return result;
+    }
+
+    public async Task<OrderContract> UpdateOrderShippedStatus(uint orderNumber, DateTime shippedAtUtc)
+    {
+        var result = await MockDatabase.Orders.Update(orderNumber!, oldOrder => {
+            if (oldOrder.Status != OrderStatus.Completed)
+            {
+                throw new InvalidOrderStatusException(
+                    $"Expected order [{orderNumber}] in status [{OrderStatus.Completed}]");
+            }
+            var updatedOrder = oldOrder with {
+                TicketsShippedUtc = shippedAtUtc
+            };
+            return updatedOrder;
+        });
+
+        return result;
     }
 }

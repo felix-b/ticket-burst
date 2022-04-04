@@ -46,6 +46,7 @@ public class ShipmentController : ControllerBase
 
         await _storageGateway.UploadObject($"orders/{order.ReservationId}/tickets.pdf", ticketsPdf);
         await _emailGateway.SendEmailMessage(emailMessage);
+        await _entityRepo.UpdateOrderShippedStatus(order.OrderNumber, shippedAtUtc: DateTime.Now);
 
         return ApiResult.Success(200, "OK");
     }

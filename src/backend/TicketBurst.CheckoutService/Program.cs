@@ -6,7 +6,7 @@ using TicketBurst.ServiceInfra;
 
 Console.WriteLine("TicketBurst Checkout Service starting.");
 
-var enityRepository = new InMemoryCheckoutEntityRepository();
+var enityRepository = new MySqlCheckoutEntityRepository();// new InMemoryCheckoutEntityRepository();
 var mockEmailGateway = new MockEmailGatewayPlugin();
 var mockPaymentGateway = new MockPaymentGatewayPlugin();
 var mockStorageGateway = new MockStorageGatewayPlugin();

@@ -9,5 +9,6 @@ public interface ICheckoutEntityRepository
     Task<OrderContract> InsertOrder(OrderContract order);
     Task<IEnumerable<OrderContract>> GetMostRecentOrders(int count);
     Task<OrderContract?> TryGetOrderByNumber(uint orderNumber);
-    Task UpdateOrderPaymentStatus(uint orderNumber, OrderStatus newStatus, string newPaymentToken);
+    Task<OrderContract> UpdateOrderPaymentStatus(uint orderNumber, OrderStatus newStatus, string newPaymentToken);
+    Task<OrderContract> UpdateOrderShippedStatus(uint orderNumber, DateTime shippedAtUtc);
 }

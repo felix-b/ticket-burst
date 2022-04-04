@@ -68,13 +68,17 @@ public class CheckoutController : ControllerBase
         var insertedOrder = !isPreviewMode
             ? await _entityRepo.InsertOrder(previewOrder)
             : null;
-                
+
         if (insertedOrder != null)
         {
             await _sagaEngine.CreateOrderCompletionWorkflow(insertedOrder);
         }
 
-        var orderToReturn = insertedOrder ?? previewOrder;
+        var insertedOrderWithPaymentToken = insertedOrder != null
+            ? await AssociatePaymentToken(orderWithAssignedNumber: insertedOrder)
+            : null;
+
+        var orderToReturn = insertedOrderWithPaymentToken ?? previewOrder;
         return ApiResult.Success(200, orderToReturn with {
             ReservationId = string.Empty
         });
@@ -159,9 +163,7 @@ public class CheckoutController : ControllerBase
 
         async Task<OrderContract> CreateOrder()
         {
-            var orderNumber = isPreviewMode 
-                ? 0 
-                : _entityRepo.TakeNextOrderNumber();
+            uint orderNumber = 0; // will be assigned upon persistence
             var orderDescription =
                 $"{tickets!.Count} Tickets to ${tickets[0].ShowTitle} {tickets[0].EventTitle}".Trim();
 
@@ -185,13 +187,13 @@ public class CheckoutController : ControllerBase
                 PaymentToken: string.Empty,
                 ReservationId: reservationInfo.Id);
 
-            if (isPreviewMode)
-            {
-                return orderWithoutPaymentToken;
-            }
-            
-            var paymentToken = await _paymentPlugin.CreatePaymentIntent(orderWithoutPaymentToken);
-            return orderWithoutPaymentToken with {
+            return orderWithoutPaymentToken;
+        }
+
+        async Task<OrderContract> AssociatePaymentToken(OrderContract orderWithAssignedNumber)
+        {
+            var paymentToken = await _paymentPlugin.CreatePaymentIntent(orderWithAssignedNumber);
+            return orderWithAssignedNumber with {
                 PaymentToken = paymentToken
             };
         }
