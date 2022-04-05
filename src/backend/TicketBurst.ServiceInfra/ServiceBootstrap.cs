@@ -28,8 +28,8 @@ public static class ServiceBootstrap
         });
 
         builder.Services.AddDataProtection()
-            .SetApplicationName("ticketburst")
-            .DisableAutomaticKeyGeneration();
+            .SetApplicationName("ticketburst");
+            //.DisableAutomaticKeyGeneration();//TODO paameterize dev/prod env
         
         builder.Services.AddCors(options => {
             options.AddPolicy(name: "the_cors_policy", builder => builder
