@@ -23,7 +23,7 @@ public class AwsKmsDataProtectionProvider : IDataProtectionProvider, IDataProtec
     public byte[] Protect(byte[] plaintext)
     {
         MemoryStream plaintextStream = new MemoryStream();
-        plaintextStream.Write(new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0 }, 0, 10);
+        plaintextStream.Write(plaintext, 0, plaintext.Length);
 
         EncryptRequest encryptRequest = new EncryptRequest() {
             KeyId = _cmkArn,
