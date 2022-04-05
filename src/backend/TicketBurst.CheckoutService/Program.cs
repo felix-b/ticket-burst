@@ -1,14 +1,19 @@
 ﻿// ReSharper disable AccessToDisposedClosure
 
+using Microsoft.AspNetCore.DataProtection;
 using TicketBurst.CheckoutService.Integrations;
 using TicketBurst.Contracts;
 using TicketBurst.ServiceInfra;
+using TicketBurst.ServiceInfra.Aws;
 
 Console.WriteLine("TicketBurst Checkout Service starting.");
 
 var entityRepository = args.Contains("--mock-db")
     ? UseMockDatabase()
     : UseRealDatabase();
+var dataProtectionProvider = args.Contains("--aws-kms")
+    ? UseAwsKms()
+    : null; 
 
 var mockEmailGateway = new MockEmailGatewayPlugin();
 var mockPaymentGateway = new MockPaymentGatewayPlugin();
@@ -24,6 +29,7 @@ var httpEndpoint = ServiceBootstrap.CreateHttpEndpoint(
     serviceDescription: "Handles checkout process, payment integration, and ticket delivery.",
     listenPortNumber: 3003,
     commandLineArgs: args,
+    dataProtectionProvider: dataProtectionProvider,
     configure: builder => {
         builder.Services.AddSingleton<ICheckoutEntityRepository>(entityRepository);
         builder.Services.AddSingleton<IMessagePublisher<OrderStatusUpdateNotificationContract>>(orderStatusUpdatePublisher);
@@ -46,3 +52,10 @@ ICheckoutEntityRepository UseMockDatabase()
     Console.WriteLine("Using MOCK DB.");
     return new InMemoryCheckoutEntityRepository();
 }
+
+IDataProtectionProvider UseAwsKms()
+{
+    Console.WriteLine("Using AWS KMS.");
+    return new AwsKmsDataProtectionProvider();
+}
+

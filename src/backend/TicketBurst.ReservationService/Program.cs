@@ -1,15 +1,20 @@
-﻿using TicketBurst.Contracts;
+﻿using Microsoft.AspNetCore.DataProtection;
+using TicketBurst.Contracts;
 using TicketBurst.ReservationService;
 using TicketBurst.ReservationService.Actors;
 using TicketBurst.ReservationService.Integrations;
 using TicketBurst.ReservationService.Jobs;
 using TicketBurst.ServiceInfra;
+using TicketBurst.ServiceInfra.Aws;
 
 Console.WriteLine("TicketBurst Reservation Service starting.");
 
 var entityRepo = args.Contains("--mock-db")
     ? UseMockDatabase()
     : UseRealDatabase();
+var dataProtectionProvider = args.Contains("--aws-kms")
+    ? UseAwsKms()
+    : null; 
 
 var mockActorEngine = new EventAreaManagerInProcessCache(entityRepo);
 
@@ -29,6 +34,7 @@ var httpEndpoint = ServiceBootstrap.CreateHttpEndpoint(
     serviceDescription: "Searches for events and available seats. Responsible for Venues, Events, and Seating Maps.",
     listenPortNumber: 3002,
     commandLineArgs: args,
+    dataProtectionProvider: dataProtectionProvider,
     configure: builder => {
         builder.Services.AddSingleton<EventWarmupJob>(warmupJop);
         builder.Services.AddSingleton<IReservationEntityRepository>(entityRepo);
@@ -37,6 +43,11 @@ var httpEndpoint = ServiceBootstrap.CreateHttpEndpoint(
 
 httpEndpoint.Run();
 
+IDataProtectionProvider UseAwsKms()
+{
+    Console.WriteLine("Using AWS KMS.");
+    return new AwsKmsDataProtectionProvider();
+}
 
 IReservationEntityRepository UseRealDatabase()
 {
@@ -49,4 +60,3 @@ IReservationEntityRepository UseMockDatabase()
     Console.WriteLine("Using MOCK DB.");
     return new InMemoryReservationEntityRepository();
 }
-

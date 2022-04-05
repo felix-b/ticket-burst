@@ -5,7 +5,7 @@ FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 
 ARG AWS_KMS_CMK_ARN
 ENV AWS_KMS_CMK_ARN=$AWS_KMS_CMK_ARN
-RUN echo AWS_KMS_CMK_ARN=$AWS_KMS_CMK_ARN
+RUN echo CMK_ARN=$AWS_KMS_CMK_ARN
 
 # copy sources
 WORKDIR /src
@@ -33,7 +33,7 @@ FROM mcr.microsoft.com/dotnet/aspnet:6.0
 
 ARG AWS_KMS_CMK_ARN
 ENV AWS_KMS_CMK_ARN=$AWS_KMS_CMK_ARN
-RUN echo AWS_KMS_CMK_ARN=$AWS_KMS_CMK_ARN
+RUN echo CMK_ARN=$AWS_KMS_CMK_ARN
 
 RUN apt-get -qq update
 RUN apt-get -qq install curl
@@ -47,4 +47,4 @@ RUN chmod +x ./reservationd
 #ENV ASPNETCORE_URLS=http://+:3001
 
 EXPOSE 80
-ENTRYPOINT ["/app/reservationd", "--mock-db"]
+ENTRYPOINT ["/app/reservationd", "--mock-db", "--aws-kms"]

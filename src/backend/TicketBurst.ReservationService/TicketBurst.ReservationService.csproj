@@ -9,6 +9,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\TicketBurst.ServiceInfra.Aws\TicketBurst.ServiceInfra.Aws.csproj" />
         <ProjectReference Include="..\TicketBurst.ServiceInfra\TicketBurst.ServiceInfra.csproj" />
     </ItemGroup>
 
