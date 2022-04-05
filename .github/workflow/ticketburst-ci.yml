@@ -40,5 +40,6 @@ jobs:
         ECR_REPOSITORY: ticketburst-search
         IMAGE_TAG: ${{ steps.vars.outputs.sha_short }}
       run: |
-        docker compose build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker compose build
+        docker tag ticketburst-services-search:v0 $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
