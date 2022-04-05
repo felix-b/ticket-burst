@@ -7,12 +7,12 @@ metadata:
     app: ticketburst
     appsvc: ticketburst-reservation
 spec:
-  type: NodePort
+  type: LoadBalancer
   selector:
     appsvc: ticketburst-reservation
   ports:
   - name: http
-    port: 3002
+    port: 80
     targetPort: 80
     protocol: TCP
 ---
@@ -24,7 +24,7 @@ spec:
   selector:
     matchLabels:
       appsvc: ticketburst-reservation
-  replicas: 2
+  replicas: 1
   template:
     metadata:
       labels:
@@ -33,12 +33,16 @@ spec:
     spec:
       containers:
       - name: ticketburst-services-reservation
-        image: 381777116710.dkr.ecr.eu-south-1.amazonaws.com/ticketburst-reservation:v0
+        image: 381777116710.dkr.ecr.eu-south-1.amazonaws.com/ticketburst-reservation:fae7bbf
         ports:
         - containerPort: 80
         env:
-        - name: EXAMPLE_ENV_VAR
-          value: example-
+        - name: TICKETBURST_SERVICEMAP_SEARCH
+          value: ticketburst-search-service.default
+        - name: TICKETBURST_SERVICEMAP_RESERVATION
+          value: ticketburst-reservation-service.default
+        - name: TICKETBURST_SERVICEMAP_CHECKOUT
+          value: ticketburst-checkout-service.default
         - name: MY_POD_NAME
           valueFrom:
             fieldRef:
