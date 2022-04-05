@@ -3,6 +3,10 @@
 #
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 
+ARG AWS_KMS_CMK_ARN
+ENV AWS_KMS_CMK_ARN=$AWS_KMS_CMK_ARN
+RUN echo AWS_KMS_CMK_ARN=$AWS_KMS_CMK_ARN
+
 # copy sources
 WORKDIR /src
 COPY . ./
@@ -12,6 +16,7 @@ RUN dotnet restore -r linux-x64
 RUN dotnet build -c Release
 WORKDIR /src/TicketBurst.ReservationService
 RUN dotnet publish -c Release -r linux-x64
+
 
 #
 # STAGE 2 - RUN
@@ -25,6 +30,10 @@ RUN dotnet publish -c Release -r linux-x64
 
 FROM mcr.microsoft.com/dotnet/aspnet:6.0
 #FROM mcr.microsoft.com/dotnet/aspnet:6.0-alpine3.14
+
+ARG AWS_KMS_CMK_ARN
+ENV AWS_KMS_CMK_ARN=$AWS_KMS_CMK_ARN
+RUN echo AWS_KMS_CMK_ARN=$AWS_KMS_CMK_ARN
 
 RUN apt-get -qq update
 RUN apt-get -qq install curl

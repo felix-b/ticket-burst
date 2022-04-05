@@ -16,7 +16,8 @@ public static class ServiceBootstrap
         string serviceDescription,
         int listenPortNumber,
         string[] commandLineArgs, 
-        Action<WebApplicationBuilder>? configure = null)
+        Action<WebApplicationBuilder>? configure = null,
+        IDataProtectionProvider? dataProtectionProvider = null)
     {
         var builder = WebApplication.CreateBuilder(commandLineArgs);
 
@@ -27,9 +28,16 @@ public static class ServiceBootstrap
             options.SerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.Always;
         });
 
-        builder.Services.AddDataProtection()
-            .SetApplicationName("ticketburst");
-            //.DisableAutomaticKeyGeneration();//TODO paameterize dev/prod env
+        if (dataProtectionProvider != null)
+        {
+            builder.Services.AddSingleton<IDataProtectionProvider>(dataProtectionProvider);
+        }
+        else
+        {
+            builder.Services.AddDataProtection()
+                .SetApplicationName("ticketburst");
+                //.DisableAutomaticKeyGeneration();//TODO paameterize dev/prod env
+        }
         
         builder.Services.AddCors(options => {
             options.AddPolicy(name: "the_cors_policy", builder => builder
