@@ -40,11 +40,16 @@ public static class MockDatabase
             return null;
         }
 
-        public static async Task Insert(OrderContract order)
+        public static async Task<OrderContract> Insert(OrderContract order)
         {
             lock (__syncRoot)
             {
-                __orderByNumber = __orderByNumber.Add(order.OrderNumber, order);
+                var orderWithNumber = order with {
+                    OrderNumber = OrderNumberCounter.TakeNextOrderNumber()
+                };
+                
+                __orderByNumber = __orderByNumber.Add(orderWithNumber.OrderNumber, orderWithNumber);
+                return orderWithNumber;
             }
         }
 

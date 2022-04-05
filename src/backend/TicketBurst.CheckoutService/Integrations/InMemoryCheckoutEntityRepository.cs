@@ -19,8 +19,8 @@ public class InMemoryCheckoutEntityRepository : ICheckoutEntityRepository
 
     public async Task<OrderContract> InsertOrder(OrderContract order)
     {
-         await MockDatabase.Orders.Insert(order);
-         return order;
+         var orderWithNumber = await MockDatabase.Orders.Insert(order);
+         return orderWithNumber;
     }
 
     public async Task<IEnumerable<OrderContract>> GetMostRecentOrders(int count)
