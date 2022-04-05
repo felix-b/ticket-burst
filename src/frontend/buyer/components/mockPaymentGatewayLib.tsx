@@ -47,7 +47,7 @@ export const createMockPaymentGatewayAPI: () => MockPaymentGatewayAPI = () => {
     return {
         async confirmPayment(paymentToken: string) {
             console.log('createMockPaymentGatewayAPI.confirmPayment', paymentToken)
-            const response = await fetch('http://localhost:3003/payment-mock/confirm-payment', {
+            const response = await fetch(`${ServiceClient.getServiceUrl('checkout')}/payment-mock/confirm-payment`, {
                 method: 'POST', 
                 headers: {
                     'Content-Type': 'application/json',
@@ -59,7 +59,7 @@ export const createMockPaymentGatewayAPI: () => MockPaymentGatewayAPI = () => {
             }
         },
         async getCustomerSession(sessionId: string) {
-            const requestUrl = 'http://localhost:3003/payment-mock/get-session?sessionId=' + sessionId
+            const requestUrl = `${ServiceClient.getServiceUrl('checkout')}/payment-mock/get-session?sessionId=${sessionId}`
             const response = await fetch(requestUrl)
             if (response.status === 200) {
                 const envelope = await response.json()

@@ -1,6 +1,21 @@
 import { BeginCheckoutRequest, GrabSeatsReply, GrabSeatsRequest, OrderContract } from "./contracts/backendApi";
 
-export const ServiceClient = {
+export type ServiceName = 'search' | 'reservation' | 'checkout'
+
+const urlByServiceName: Record<ServiceName, string> = {
+    'search': 'https://3cnuf521pd.execute-api.eu-south-1.amazonaws.com',
+    'reservation': 'https://3cnuf521pd.execute-api.eu-south-1.amazonaws.com',
+    'checkout': 'https://3cnuf521pd.execute-api.eu-south-1.amazonaws.com',
+}
+
+const getServiceUrl = (serviceName: ServiceName): string => {
+    return urlByServiceName[serviceName]
+}
+
+export const ServiceClient = { 
+    
+    getServiceUrl,
+    
     async grabSeats(request: GrabSeatsRequest): Promise<GrabSeatsReply> {
         const getErrorText = (reply: GrabSeatsReply): string | undefined => {
             if (reply.success === true) {
@@ -12,7 +27,7 @@ export const ServiceClient = {
         }
 
         try {
-            const response = await fetch('http://localhost:3002/reservation/grab', {
+            const response = await fetch(`${getServiceUrl('reservation')}/reservation/grab`, {
                 method: 'POST', 
                 headers: {
                     'Content-Type': 'application/json',
@@ -37,8 +52,9 @@ export const ServiceClient = {
             }
         }
     },
+    
     async beginCheckout(request: BeginCheckoutRequest): Promise<OrderContract | null> {
-        const response = await fetch('http://localhost:3003/checkout/begin', {
+        const response = await fetch(`${getServiceUrl('checkout')}/checkout/begin`, {
             method: 'POST', 
             headers: {
                 'Content-Type': 'application/json',
@@ -51,4 +67,5 @@ export const ServiceClient = {
 
         return order
     }
+
 }

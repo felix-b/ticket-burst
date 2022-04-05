@@ -6,6 +6,7 @@ import { EventSearchAreaInfo, EventSearchFullDetail, EventSearchHallInfo, EventS
 import { Utility } from '../utility'
 import Link from 'next/link'
 import { EventDetailsSidebar } from '../components/eventDetailsSidebar'
+import { ServiceClient } from '../serviceClient'
 
 interface EventPageProps {
     data: EventSearchFullDetail
@@ -76,7 +77,7 @@ export async function getServerSideProps({ query }): Promise<{ props: EventPageP
     }
 
     try {
-        const res = await fetch(`http://localhost:3001/search/event/${eventId}`)
+        const res = await fetch(`${ServiceClient.getServiceUrl('search')}/search/event/${eventId}`)
         const envelope = await res.json()
         const data = envelope.data as EventSearchFullDetail
         return { 

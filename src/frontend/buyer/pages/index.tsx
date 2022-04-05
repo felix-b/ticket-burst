@@ -7,6 +7,7 @@ import { EventSearchResult } from '../contracts/backendApi'
 import { Utility } from '../utility'
 import { EventCard } from '../components/eventCard'
 import { EventSearchForm } from '../components/eventSearchForm'
+import { ServiceClient } from '../serviceClient'
 
 interface IndexPageProps {
     events: EventSearchResult[]
@@ -59,7 +60,7 @@ export default IndexPage
 
 export async function getServerSideProps(): Promise<{ props: IndexPageProps }> {
     try {
-        const res = await fetch(`http://localhost:3001/search?selling=true&count=9`)
+        const res = await fetch(`${ServiceClient.getServiceUrl('search')}/search?selling=true&count=9`)
         const envelope = await res.json()
         const events = envelope.data as EventSearchResult[]
         return { 

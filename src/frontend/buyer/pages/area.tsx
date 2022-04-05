@@ -311,7 +311,7 @@ export async function getServerSideProps({ query }): Promise<{ props: AreaPagePr
     }
 
     try {
-        const res = await fetch(`http://localhost:3001/search/event/${eventId}/area/${areaId}`)
+        const res = await fetch(`${ServiceClient.getServiceUrl('search')}/search/event/${eventId}/area/${areaId}`)
         const envelope = await res.json()
         const data = envelope.data as EventSearchAreaFullDetail
         return { 
