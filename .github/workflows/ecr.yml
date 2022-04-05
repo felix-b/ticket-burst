@@ -3,7 +3,12 @@ name: Build and Push to ECR
 on:
  
   push:
-    branches: [ master ]
+    branches: 
+      - master
+    paths-ignore:
+      - src/cicd/cdk
+      - src/cicd/eks
+      - src/cicd/k8s
 
 jobs:
   
@@ -12,7 +17,6 @@ jobs:
     name: Build Image
     runs-on: ubuntu-latest
 
-   
     steps:
 
     - name: Check out code

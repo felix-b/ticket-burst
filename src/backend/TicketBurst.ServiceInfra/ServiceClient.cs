@@ -8,18 +8,18 @@ namespace TicketBurst.ServiceInfra;
 
 public static class ServiceClient
 {
-    private static readonly IReadOnlyDictionary<ServiceName, string> __hostByServiceName = new Dictionary<ServiceName, string> {
+    private static IReadOnlyDictionary<ServiceName, string> __hostByServiceName = new Dictionary<ServiceName, string> {
         {
             ServiceName.Search, 
-            Environment.GetEnvironmentVariable("TICKETBURST_SERVICEMAP_SEARCH") ?? "localhost:3001"
+            "http://" + (Environment.GetEnvironmentVariable("TICKETBURST_SERVICEMAP_SEARCH") ?? "localhost:3001")
         },
         {
             ServiceName.Reservation, 
-            Environment.GetEnvironmentVariable("TICKETBURST_SERVICEMAP_RESERVATION") ?? "localhost:3002"
+            "http://" + (Environment.GetEnvironmentVariable("TICKETBURST_SERVICEMAP_RESERVATION") ?? "localhost:3002")
         },  
         {
             ServiceName.Checkout, 
-            Environment.GetEnvironmentVariable("TICKETBURST_SERVICEMAP_CHECKOUT") ?? "localhost:3003"
+            "http://" + (Environment.GetEnvironmentVariable("TICKETBURST_SERVICEMAP_CHECKOUT") ?? "localhost:3003")
         },  
     };
     
@@ -80,6 +80,11 @@ public static class ServiceClient
         }
     }
 
+    public static void UseHosts(IReadOnlyDictionary<ServiceName, string> hostByServiceName)
+    {
+        __hostByServiceName = hostByServiceName;
+    }
+
     private static async Task<T?> LoadResponseAsJson<T>(HttpResponseMessage response)
         where T : class
     {
@@ -115,7 +120,7 @@ public static class ServiceClient
         string[]? path = null, 
         Tuple<string, string>[]? query = null)
     {
-        var builder = new StringBuilder("http://");
+        var builder = new StringBuilder();
         builder.Append(__hostByServiceName[serviceName]);
 
         if (path != null)

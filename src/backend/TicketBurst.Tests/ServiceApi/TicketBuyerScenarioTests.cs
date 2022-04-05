@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using FluentAssertions.Execution;
 using NUnit.Framework;
+using TicketBurst.CheckoutService.Integrations;
 using TicketBurst.Contracts;
 using TicketBurst.ServiceInfra;
 
@@ -15,6 +16,16 @@ namespace TicketBurst.Tests.ServiceApi;
 [TestFixture(Category = "e2e")]
 public class TicketBuyerScenarioTests
 {
+    [OneTimeSetUp]
+    public void BeforeAll()
+    {
+        ServiceClient.UseHosts(new Dictionary<ServiceName, string> {
+            { ServiceName.Search, "https://3cnuf521pd.execute-api.eu-south-1.amazonaws.com" },
+            { ServiceName.Reservation, "https://3cnuf521pd.execute-api.eu-south-1.amazonaws.com" },
+            { ServiceName.Checkout, "https://3cnuf521pd.execute-api.eu-south-1.amazonaws.com" },
+        });
+    }
+    
     [Test]
     public async Task BuyTicketsEndToEnd()
     {
@@ -25,9 +36,12 @@ public class TicketBuyerScenarioTests
         var orderPreview = await PreviewCheckout(reservationReply);
         var realOrder = await BeginCheckout(reservationReply);
         await EnterPaymentDetails(realOrder);
+        await ReceiveSuccessMessage(realOrder);
         await WaitForOrderCompleted(realOrder.OrderNumber);
-        await WaitForTickets(realOrder);
 
+        /*
+        await WaitForTickets(realOrder);
+        
         async Task WaitForTickets(OrderContract order)
         {
             var outboxFolderPath =
@@ -46,6 +60,7 @@ public class TicketBuyerScenarioTests
             
             throw new AssertionFailedException("Order was not completed");
         }
+        */
 
         async Task WaitForOrderCompleted(uint orderNumber)
         {
@@ -69,6 +84,22 @@ public class TicketBuyerScenarioTests
             }
             
             throw new AssertionFailedException("Order was not completed");
+        }
+
+        async Task ReceiveSuccessMessage(OrderContract order)
+        {
+            var reply = await ServiceClient.HttpGetJson<MockPaymentGatewayPlugin.PaymentData>(
+                ServiceName.Checkout,
+                path: new[] { "payment-mock", "get-session" },
+                query: new[] {
+                    new Tuple<string, string>("sessionId", order.PaymentToken)
+                });
+
+            reply.Should().NotBeNull();
+            reply!.OrderNumber.Should().Be(order.OrderNumber);
+            reply.CustomerName.Should().Be(order.CustomerName);
+            reply.CustomerEmail.Should().Be(order.CustomerEmail);
+            reply.NotificationStatus.Should().Be("OK");
         }
 
         async Task EnterPaymentDetails(OrderContract order)
@@ -137,12 +168,7 @@ public class TicketBuyerScenarioTests
 
         async Task<SeatReservationReplyContract> GrabSeats(EventSearchAreaSeatingContract area)
         {
-            var row = area.SeatingMap.Rows[2];
-            var seats = new[] {
-                row.Seats[3],
-                row.Seats[4],
-                row.Seats[5]
-            };
+            var seats = Find3Seats();
 
             var request = new SeatReservationRequestContract(
                 eventId: area.Header.Event.EventId,
@@ -159,6 +185,27 @@ public class TicketBuyerScenarioTests
             reservationReply!.CheckoutToken.Should().NotBeNullOrWhiteSpace();
 
             return reservationReply;
+
+            SeatingMapSeatContract[] Find3Seats()
+            {
+                foreach (var row in area.SeatingMap.Rows)
+                {
+                    for (int i = 0; i < row.Seats.Count - 3; i++)
+                    {
+                        if (row.Seats[i].Status == SeatStatus.Available &&
+                            row.Seats[i + 1].Status == SeatStatus.Available &&
+                            row.Seats[i + 2].Status == SeatStatus.Available)
+                        {
+                            return new[] {
+                                row.Seats[i],
+                                row.Seats[i + 1],
+                                row.Seats[i + 2]
+                            };
+                        }
+                    }
+                }
+                throw new AssertionFailedException("Could not find 3 available seats");
+            }
         }
 
         async Task<EventSearchAreaSeatingContract> ViewSeatingMap(EventSearchFullDetailContract details)
