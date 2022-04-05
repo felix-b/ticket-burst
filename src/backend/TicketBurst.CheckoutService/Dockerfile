@@ -38,4 +38,4 @@ RUN chmod +x ./checkoutd
 #ENV ASPNETCORE_URLS=http://+:3001
 
 EXPOSE 80
-ENTRYPOINT ["/app/checkoutd"]
+ENTRYPOINT ["/app/checkoutd", "--mock-db"]

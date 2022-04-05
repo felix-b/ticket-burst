@@ -38,4 +38,4 @@ RUN chmod +x ./reservationd
 #ENV ASPNETCORE_URLS=http://+:3001
 
 EXPOSE 80
-ENTRYPOINT ["/app/reservationd"]
+ENTRYPOINT ["/app/reservationd", "--mock-db"]

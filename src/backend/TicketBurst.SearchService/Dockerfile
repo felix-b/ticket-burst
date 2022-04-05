@@ -38,4 +38,4 @@ RUN chmod +x ./searchd
 #ENV ASPNETCORE_URLS=http://+:3001
 
 EXPOSE 80
-ENTRYPOINT ["/app/searchd"]
+ENTRYPOINT ["/app/searchd", "--mock-db"]
