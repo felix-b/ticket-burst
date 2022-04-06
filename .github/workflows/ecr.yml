@@ -5,10 +5,8 @@ on:
   push:
     branches: 
       - master
-    paths-ignore:
-      - src/cicd/cdk
-      - src/cicd/eks
-      - src/cicd/k8s
+    paths:
+      - src/backend/
 
 jobs:
   

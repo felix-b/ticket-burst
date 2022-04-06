@@ -31,6 +31,8 @@ spec:
         app: ticketburst
         appsvc: ticketburst-checkout
     spec:
+      nodeSelector:
+        appsvc: ticketburst-checkout
       containers:
       - name: ticketburst-services-checkout
         image: 381777116710.dkr.ecr.eu-south-1.amazonaws.com/ticketburst-checkout:46f0610

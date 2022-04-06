@@ -31,6 +31,8 @@ spec:
         app: ticketburst
         appsvc: ticketburst-reservation
     spec:
+      nodeSelector:
+        appsvc: ticketburst-reservation
       containers:
       - name: ticketburst-services-reservation
         image: 381777116710.dkr.ecr.eu-south-1.amazonaws.com/ticketburst-reservation:46f0610
