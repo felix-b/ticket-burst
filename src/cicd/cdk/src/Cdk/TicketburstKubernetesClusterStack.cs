@@ -6,9 +6,9 @@ using Constructs;
 
 namespace Cdk;
 
-public class TicketBurstBackendStack : Stack
+public class TicketburstKubernetesClusterStack : Stack
 {
-    internal TicketBurstBackendStack(Construct scope, string id, IStackProps props = null) : base(scope, id, props)
+    internal TicketburstKubernetesClusterStack(Construct scope, string id, IStackProps props = null) : base(scope, id, props)
     {
         var clusterAdminRole = new Role(this, "ticketburst-cluster-admin-role", new RoleProps {
             //AssumedBy = new ArnPrincipal("arn:aws:iam::989574085263:user/admin-user")

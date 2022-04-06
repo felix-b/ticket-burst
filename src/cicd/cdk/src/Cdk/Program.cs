@@ -11,7 +11,7 @@ namespace Cdk
         {
             var app = new App();
 
-            var stack = new TicketBurstBackendStack(app, "ticketburst-backend-stack", new StackProps {
+            var stack = new TicketburstKubernetesClusterStack(app, "ticketburst-backend-stack", new StackProps {
                 StackName = "ticketburst-backend-stack",
                 Tags = CommonTags.App(),
                 Env = GetTargetEnvironment()
