@@ -109,7 +109,7 @@ export const MockCreditCardDetailsForm = (props: {
             const form = formikRef.current
             await form.validateForm()
             console.log('MockCreditCardDetailsForm> validaateForm>', form.isValid)
-            onValidationResult(form.isValid, createMockPaymentGatewayAPI(order))
+            onValidationResult(form.isValid, createMockPaymentGatewayAPI())
         })
     }
 

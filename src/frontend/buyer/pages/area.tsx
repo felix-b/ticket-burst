@@ -255,7 +255,7 @@ const SeatingPlanSidebar = (props: AreaPageProps) => {
                         </Tag>                                       
                         to 
                         <Link href={`/checkout?${checkoutUrlQuery}`}>
-                            <Button size='xs' colorScheme='green' fontWeight={400} fontSize='18' h='35px' fontWeight='500' ml='10px'>
+                            <Button size='xs' colorScheme='green' fontSize='18' h='35px' fontWeight={500} ml='10px'>
                                 <u>Complete Your Order</u>
                             </Button>
                         </Link>                                

@@ -15,7 +15,7 @@ const TicketBasketItem = (props: { ticket: TicketContract }) => {
     return (
         <StatGroup border={'1px solid lightgray'} p={2} borderRadius={'xl'} w='500px' mb='10px' color='gray.400'>
             <HStack w='full' wrap='nowrap' direction='row' justify='space-between' h='120px'>
-                <Stat color='blue.700' p='0' color='gray.400'>
+                <Stat p='0' color='gray.400'>
                     <StatLabel fontSize='xl'>{ticket.eventTitle} {ticket.showTitle}</StatLabel>
                     <StatLabel fontSize='md' mt='-8px'>{dateText} {timeText}</StatLabel>
                     <StatLabel fontSize='lg' mt='8px'>Area {ticket.areaName} Row {ticket.rowName} Seat {ticket.seatName}</StatLabel>
