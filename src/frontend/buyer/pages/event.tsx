@@ -70,16 +70,22 @@ const EventPage = (props: EventPageProps) => {
 
 export default EventPage
 
-export async function getServerSideProps({ query }): Promise<{ props: EventPageProps }> {
+export async function getServerSideProps({ query, res }): Promise<{ props: EventPageProps }> {
     const eventId = query.id
     if (typeof eventId !== 'string' || eventId.length < 10 || eventId.length > 40) {
         throw new Error('Invalid query string')
     }
 
     try {
-        const res = await fetch(`${ServiceClient.getServiceUrl('search')}/search/event/${eventId}`)
-        const envelope = await res.json()
+        const apiResponse = await fetch(`${ServiceClient.getServiceUrl('search')}/search/event/${eventId}`)
+        const envelope = await apiResponse.json()
         const data = envelope.data as EventSearchFullDetail
+
+        res.setHeader(
+            'Cache-Control',
+            'public, s-maxage=60, stale-while-revalidate=120'
+        )
+
         return { 
             props: { 
                 data 

@@ -1,0 +1,30 @@
+index -> CloudFront edge function
+
+https://master.d3w3y5zs3pz304.amplifyapp.com/_next/data/x3FvbfnprmcrPAc-dGKCW/index.json
+
+event page -> CloudFront edge function
+
+https://master.d3w3y5zs3pz304.amplifyapp.com/_next/data/x3FvbfnprmcrPAc-dGKCW/event.json?id=547dacbe-7357-414e-b503-a834c3f16fa8
+https://master.d3w3y5zs3pz304.amplifyapp.com/_next/data/x3FvbfnprmcrPAc-dGKCW/event.json?id=5e469d6c-b83d-4acd-9d2d-e306ed7802d6
+
+area page -> CloudFront edge function
+
+https://master.d3w3y5zs3pz304.amplifyapp.com/_next/data/x3FvbfnprmcrPAc-dGKCW/area.json?eventId=5e469d6c-b83d-4acd-9d2d-e306ed7802d6&areaId=3b090119-02ea-470e-93b7-047c3200c806
+https://master.d3w3y5zs3pz304.amplifyapp.com/_next/data/x3FvbfnprmcrPAc-dGKCW/area.json?eventId=5e469d6c-b83d-4acd-9d2d-e306ed7802d6&areaId=65d0f37e-e4bf-48b3-9a7f-3408e07d0f67
+
+grab -> API Gateway
+
+https://3cnuf521pd.execute-api.eu-south-1.amazonaws.com/reservation/grab
+
+checkout -> CloudFront edge function
+
+https://master.d3w3y5zs3pz304.amplifyapp.com/_next/data/x3FvbfnprmcrPAc-dGKCW/checkout.json?eventId=5e469d6c-b83d-4acd-9d2d-e306ed7802d6&areaId=cfb62318-17be-46f9-a5f7-57883f6c4ef6&token=AQICAHiNC0S76T4DSMSPRj6uslN3bRLwXoz7PLvAy_Ym9e5AhwG-J0t09UccWCumKdBJ5XPWAAAAgzCBgAYJKoZIhvcNAQcGoHMwcQIBADBsBgkqhkiG9w0BBwEwHgYJYIZIAWUDBAEuMBEEDOurirO2sm7WkT5M0wIBEIA_Cc6v33BvLTvEyxH-Nz-kiojijRfsussKGTeDN1FUUJtu9arLbFhe9Gtt96xk39qw9Cl8JH44IfNw1b3H2BcJ
+
+confirm-payment -> API Gateway
+
+https://3cnuf521pd.execute-api.eu-south-1.amazonaws.com/payment-mock/confirm-payment
+
+success -> CloudFront edge function
+
+https://master.d3w3y5zs3pz304.amplifyapp.com/success?sessionId=CfDJ8CNlC7Aai0dEr4Digpual0T47hZcFAZ-AvDhISc_TvdefY6hbwcHRfAN7ONW5vIWK6QJ9iOWpWq5ChkknMvy5XXW9Y_OBqsdrPrYHloRwV1ZTz2-F-4N5wMyIFTQ1P6aoDO7Rjp1-E9JiNHrV-ymvrWgbMNWdLXWuSGZYxgm70geDtSe-kqL99mENeCgkS2OPZT-Eg9aSnVtmgL4ifnL30Pm5oZUSpuXfz9WbY1zHJyjDJBiAIEdYD6ZuVp2ILItFcv8uhrcr7l2_ygySrMxGceUIfKRWzyFS82yKdOgt7hjnwNmtkTPWaxdwTiW_Bwmxg
+

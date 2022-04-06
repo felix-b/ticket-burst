@@ -58,11 +58,17 @@ const IndexPage = (props: IndexPageProps) => {
 
 export default IndexPage
 
-export async function getServerSideProps(): Promise<{ props: IndexPageProps }> {
+export async function getServerSideProps({ res }): Promise<{ props: IndexPageProps }> {
     try {
-        const res = await fetch(`${ServiceClient.getServiceUrl('search')}/search?selling=true&count=9`)
-        const envelope = await res.json()
+        const apiResponse = await fetch(`${ServiceClient.getServiceUrl('search')}/search?selling=true&count=9`)
+        const envelope = await apiResponse.json()
         const events = envelope.data as EventSearchResult[]
+
+        res.setHeader(
+            'Cache-Control',
+            'public, s-maxage=120, stale-while-revalidate=240'
+        )
+
         return { 
             props: { 
                 events 

@@ -300,7 +300,7 @@ const AreaPage = (props: AreaPageProps) => {
 
 export default AreaPage
 
-export async function getServerSideProps({ query }): Promise<{ props: AreaPageProps }> {
+export async function getServerSideProps({ query, res }): Promise<{ props: AreaPageProps }> {
     const eventId = query.eventId
     const areaId = query.areaId
     if (typeof eventId !== 'string' || eventId.length < 10 || eventId.length > 40) {
@@ -311,9 +311,15 @@ export async function getServerSideProps({ query }): Promise<{ props: AreaPagePr
     }
 
     try {
-        const res = await fetch(`${ServiceClient.getServiceUrl('search')}/search/event/${eventId}/area/${areaId}`)
-        const envelope = await res.json()
+        const apiResponse = await fetch(`${ServiceClient.getServiceUrl('search')}/search/event/${eventId}/area/${areaId}`)
+        const envelope = await apiResponse.json()
         const data = envelope.data as EventSearchAreaFullDetail
+
+        res.setHeader(
+            'Cache-Control',
+            'public, s-maxage=30, stale-while-revalidate=60'
+        )
+
         return { 
             props: { 
                 data 
