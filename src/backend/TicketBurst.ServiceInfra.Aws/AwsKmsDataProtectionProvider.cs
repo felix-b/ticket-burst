@@ -11,7 +11,10 @@ public class AwsKmsDataProtectionProvider : IDataProtectionProvider, IDataProtec
 
     public AwsKmsDataProtectionProvider()
     {
-        _cmkArn = Environment.GetEnvironmentVariable("AWS_KMS_CMK_ARN") ?? string.Empty;
+        _cmkArn = 
+            Environment.GetEnvironmentVariable("AWS_KMS_CMK_ARN") 
+            ?? throw new Exception("AwsKmsDataProtectionProvider: missing env var 'AWS_KMS_CMK_ARN'");
+
         _kmsClient = new AmazonKeyManagementServiceClient();
     }
 

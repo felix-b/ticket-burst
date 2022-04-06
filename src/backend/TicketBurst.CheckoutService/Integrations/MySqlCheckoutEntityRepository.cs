@@ -1,12 +1,11 @@
 ﻿#pragma warning disable CS8618
 
 using System.Collections.Immutable;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using TicketBurst.CheckoutService.Contracts;
 using TicketBurst.Contracts;
+using TicketBurst.ServiceInfra;
 
 namespace TicketBurst.CheckoutService.Integrations;
 
@@ -16,12 +15,13 @@ public class MySqlCheckoutEntityRepository : ICheckoutEntityRepository
     private readonly string _connectionString;
     private readonly PooledDbContextFactory<CheckoutDbContext> _dbContextFactory;
 
-    public MySqlCheckoutEntityRepository()
+    public MySqlCheckoutEntityRepository(ISecretsManagerPlugin secrets)
     {
-        _connectionString =
-            Environment.GetEnvironmentVariable("TICKETBURST_DB_CHECKOUT")
-            ?? "server=localhost;database=checkout_service;user=root;password=rootpass1";
-        
+        var connectionSecret = secrets.GetConnectionStringSecret("checkout-db-connstr").Result;
+        _connectionString = 
+            $"server=${connectionSecret.Server};database=checkout_service;" + 
+            $"user=${connectionSecret.UserName};password=${connectionSecret.Password}";
+
         var options = new DbContextOptionsBuilder<CheckoutDbContext>()
             .UseLazyLoadingProxies(true)
             .UseMySql(_connectionString, _mySqlVersion)

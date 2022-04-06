@@ -8,12 +8,17 @@ using TicketBurst.ServiceInfra.Aws;
 
 Console.WriteLine("TicketBurst Checkout Service starting.");
 
+var IsAwsEnvironment = args.Contains("--aws");
+
+var dataProtectionProvider = IsAwsEnvironment
+    ? UseAwsKms()
+    : null;
+ISecretsManagerPlugin secretsManager = IsAwsEnvironment
+    ? new AwsSecretsManagerPlugin()
+    : new DevboxSecretsManagerPlugin(); 
 var entityRepository = args.Contains("--mock-db")
     ? UseMockDatabase()
     : UseRealDatabase();
-var dataProtectionProvider = args.Contains("--aws-kms")
-    ? UseAwsKms()
-    : null; 
 
 var mockEmailGateway = new MockEmailGatewayPlugin();
 var mockPaymentGateway = new MockPaymentGatewayPlugin();
@@ -44,7 +49,7 @@ httpEndpoint.Run();
 ICheckoutEntityRepository UseRealDatabase()
 {
     Console.WriteLine("Using MYSQL DB.");
-    return new MySqlCheckoutEntityRepository();
+    return new MySqlCheckoutEntityRepository(secretsManager);
 }
 
 ICheckoutEntityRepository UseMockDatabase()
