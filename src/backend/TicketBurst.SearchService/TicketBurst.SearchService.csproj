@@ -15,6 +15,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\TicketBurst.Contracts\TicketBurst.Contracts.csproj" />
+      <ProjectReference Include="..\TicketBurst.ServiceInfra.Aws\TicketBurst.ServiceInfra.Aws.csproj" />
       <ProjectReference Include="..\TicketBurst.ServiceInfra\TicketBurst.ServiceInfra.csproj" />
     </ItemGroup>
 

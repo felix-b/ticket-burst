@@ -33,11 +33,13 @@ public class MongoDbSearchEntityRepository : ISearchEntityRepository
         ConventionRegistry.Register(nameof(CamelCaseElementNameConvention), pack, _ => true);        
     }
     
-    public MongoDbSearchEntityRepository()
+    public MongoDbSearchEntityRepository(ConnectionStringSecret secret)
     {
-        var connectionString = 
-            Environment.GetEnvironmentVariable("TICKETBURST_DB_SEARCH") 
-            ?? "mongodb://localhost";
+        var connectionString = !string.IsNullOrWhiteSpace(secret.Host)
+            ? $"mongodb://{secret.UserName}:{secret.Password}@{secret.Host}:{secret.Port}/?replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false"
+            : "mongodb://localhost";
+        
+        Console.WriteLine($"MongoDbSearchEntityRepository: using connection string [{connectionString}]");
         
         var client = new MongoClient(connectionString);
         _database = client.GetDatabase("search_service");

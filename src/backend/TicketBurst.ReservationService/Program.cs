@@ -9,10 +9,15 @@ using TicketBurst.ServiceInfra.Aws;
 
 Console.WriteLine("TicketBurst Reservation Service starting.");
 
+var isAwsEnvironment = args.Contains("--aws");
+
+ISecretsManagerPlugin secretsManager = isAwsEnvironment
+    ? new AwsSecretsManagerPlugin()
+    : new DevboxSecretsManagerPlugin(); 
 var entityRepo = args.Contains("--mock-db")
     ? UseMockDatabase()
     : UseRealDatabase();
-var dataProtectionProvider = args.Contains("--aws-kms")
+var dataProtectionProvider = isAwsEnvironment
     ? UseAwsKms()
     : null; 
 
@@ -52,7 +57,9 @@ IDataProtectionProvider UseAwsKms()
 IReservationEntityRepository UseRealDatabase()
 {
     Console.WriteLine("Using MONGODB.");
-    return new MongoDbReservationEntityRepository();
+    var connectionString = secretsManager.GetConnectionStringSecret("reservation-db-connstr").Result;
+    var repo = new MongoDbReservationEntityRepository(connectionString);
+    return repo;
 }
 
 IReservationEntityRepository UseMockDatabase()

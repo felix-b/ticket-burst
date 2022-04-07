@@ -4,9 +4,15 @@ using TicketBurst.SearchService.Integrations;
 using TicketBurst.SearchService.Jobs;
 using TicketBurst.SearchService.Logic;
 using TicketBurst.ServiceInfra;
+using TicketBurst.ServiceInfra.Aws;
 
 Console.WriteLine("TicketBurst Search Service starting.");
 
+var isAwsEnvironment = args.Contains("--aws");
+
+ISecretsManagerPlugin secretsManager = isAwsEnvironment
+    ? new AwsSecretsManagerPlugin()
+    : new DevboxSecretsManagerPlugin(); 
 var searchEntityRepo = args.Contains("--mock-db")
     ? UseMockDatabase()
     : UseRealDatabase();
@@ -44,8 +50,10 @@ ISearchEntityRepository UseRealDatabase()
 {
     Console.WriteLine($"Using MONGODB");
     MockDatabase.UseObjectId();
+
+    var connectionString = secretsManager.GetConnectionStringSecret("search-db-connstr").Result;
+    var repo = new MongoDbSearchEntityRepository(connectionString);
     
-    var repo = new MongoDbSearchEntityRepository();
     if (repo.ShouldInsertInitialData())
     {
         Console.WriteLine(

@@ -8,12 +8,12 @@ using TicketBurst.ServiceInfra.Aws;
 
 Console.WriteLine("TicketBurst Checkout Service starting.");
 
-var IsAwsEnvironment = args.Contains("--aws");
+var isAwsEnvironment = args.Contains("--aws");
 
-var dataProtectionProvider = IsAwsEnvironment
+var dataProtectionProvider = isAwsEnvironment
     ? UseAwsKms()
     : null;
-ISecretsManagerPlugin secretsManager = IsAwsEnvironment
+ISecretsManagerPlugin secretsManager = isAwsEnvironment
     ? new AwsSecretsManagerPlugin()
     : new DevboxSecretsManagerPlugin(); 
 var entityRepository = args.Contains("--mock-db")

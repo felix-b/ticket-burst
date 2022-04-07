@@ -6,6 +6,7 @@ using MongoDB.Driver;
 using MongoDB.Driver.Linq;
 using TicketBurst.Contracts;
 using TicketBurst.ReservationService.Contracts;
+using TicketBurst.ServiceInfra;
 
 namespace TicketBurst.ReservationService.Integrations;
 
@@ -22,12 +23,14 @@ public class MongoDbReservationEntityRepository : IReservationEntityRepository
         ConventionRegistry.Register(nameof(CamelCaseElementNameConvention), pack, _ => true);        
     }
     
-    public MongoDbReservationEntityRepository()
+    public MongoDbReservationEntityRepository(ConnectionStringSecret secret)
     {
-        var connectionString = 
-            Environment.GetEnvironmentVariable("TICKETBURST_DB_RESERVATION") 
-            ?? "mongodb://localhost";
-        
+        var connectionString = !string.IsNullOrWhiteSpace(secret.Host)
+            ? $"mongodb://{secret.UserName}:{secret.Password}@{secret.Host}:{secret.Port}/?replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false"
+            : "mongodb://localhost";
+
+        Console.WriteLine($"MongoDbReservationEntityRepository: using connection string [{connectionString}]");
+
         var client = new MongoClient(connectionString);
         _database = client.GetDatabase("reservation_service");
 
