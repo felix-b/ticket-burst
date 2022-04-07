@@ -48,9 +48,8 @@ httpEndpoint.Run();
 
 ICheckoutEntityRepository UseRealDatabase()
 {
-    var overrideConnectionString = Environment.GetEnvironmentVariable("CHECKOUTDB_CONNSTR");
-    Console.WriteLine($"Using MYSQL DB. ConStr override [${(overrideConnectionString ?? "N/A")}]");
-    return new MySqlCheckoutEntityRepository(secretsManager, overrideConnectionString);
+    Console.WriteLine($"Using MYSQL DB.");
+    return new MySqlCheckoutEntityRepository(secretsManager);
 }
 
 ICheckoutEntityRepository UseMockDatabase()
@@ -64,4 +63,3 @@ IDataProtectionProvider UseAwsKms()
     Console.WriteLine("Using AWS KMS.");
     return new AwsKmsDataProtectionProvider();
 }
-

@@ -17,12 +17,17 @@ public class AwsSecretsManagerPlugin : ISecretsManagerPlugin
             throw new Exception($"AwsSecretsManagerPlugin: unable to retrieve connstr secret [{secretName}]");
         }
         
-        var secret =
-            JsonSerializer.Deserialize<ConnectionStringSecret>(json)
-            ?? throw new Exception($"AwsSecretsManagerPlugin: unable to parse connstr secret [{secretName}]");
-        
-        Console.WriteLine($"AwsSecretsManagerPlugin> retrieved connstr secret [{secretName}], json=[{json}]");
-        Console.WriteLine($"AwsSecretsManagerPlugin> retrieved connstr secret [{secretName}], server=[{secret.Server}] port=[${secret.Port}]");
+        var secret = JsonSerializer.Deserialize<ConnectionStringSecret>(json, new JsonSerializerOptions {
+            PropertyNameCaseInsensitive = true
+        });
+
+        if (secret == null || string.IsNullOrWhiteSpace(secret.Host))
+        {
+            throw new Exception($"AwsSecretsManagerPlugin: unable to parse connstr secret [{secretName}]");
+        }
+
+        // Console.WriteLine($"AwsSecretsManagerPlugin> retrieved connstr secret [{secretName}], json=[{json}]");
+        // Console.WriteLine($"AwsSecretsManagerPlugin> retrieved connstr secret [{secretName}], server=[{secret.Host}] port=[${secret.Port}]");
 
         return secret;
     }

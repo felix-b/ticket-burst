@@ -6,7 +6,7 @@ public interface ISecretsManagerPlugin
 }
 
 public record ConnectionStringSecret(
-    string Server,
+    string Host,
     int Port,
     string UserName,
     string Password
