@@ -37,6 +37,7 @@ RUN echo CMK_ARN=$AWS_KMS_CMK_ARN
 RUN apt-get -qq update
 RUN apt-get -qq install curl
 RUN apt-get -qq install libfontconfig1
+RUN apt-get -qq install mariadb-client
 
 # copy executable
 WORKDIR /app
