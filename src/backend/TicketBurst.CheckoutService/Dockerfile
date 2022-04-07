@@ -4,8 +4,11 @@
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 
 ARG AWS_KMS_CMK_ARN
+ARG AWS_S3_BUCKET_ARN
 ENV AWS_KMS_CMK_ARN=$AWS_KMS_CMK_ARN
+ENV AWS_S3_BUCKET_ARN=$AWS_S3_BUCKET_ARN
 RUN echo CMK_ARN=$AWS_KMS_CMK_ARN
+RUN echo BUCKET_ARN=AWS_S3_BUCKET_ARN
 
 # copy sources
 WORKDIR /src
@@ -31,8 +34,11 @@ FROM mcr.microsoft.com/dotnet/aspnet:6.0
 #FROM mcr.microsoft.com/dotnet/aspnet:6.0-alpine3.14
 
 ARG AWS_KMS_CMK_ARN
+ARG AWS_S3_BUCKET_ARN
 ENV AWS_KMS_CMK_ARN=$AWS_KMS_CMK_ARN
+ENV AWS_S3_BUCKET_ARN=$AWS_S3_BUCKET_ARN
 RUN echo CMK_ARN=$AWS_KMS_CMK_ARN
+RUN echo BUCKET_ARN=AWS_S3_BUCKET_ARN
 
 RUN apt-get -qq update
 RUN apt-get -qq install curl

@@ -1,7 +1,6 @@
 ﻿using MimeKit;
-using TicketBurst.Contracts;
 
-namespace TicketBurst.CheckoutService.Integrations;
+namespace TicketBurst.ServiceInfra;
 
 public interface IEmailGatewayPlugin
 {

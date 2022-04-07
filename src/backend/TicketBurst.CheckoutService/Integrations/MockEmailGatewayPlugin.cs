@@ -2,6 +2,7 @@
 
 using System.Reflection;
 using MimeKit;
+using TicketBurst.ServiceInfra;
 
 namespace TicketBurst.CheckoutService.Integrations;
 

@@ -19,10 +19,12 @@ ISecretsManagerPlugin secretsManager = isAwsEnvironment
 var entityRepository = args.Contains("--mock-db")
     ? UseMockDatabase()
     : UseRealDatabase();
+IStorageGatewayPlugin storageGateway = isAwsEnvironment
+    ? new AwsS3StorageGatewayPlugin()
+    : new MockStorageGatewayPlugin();
 
 var mockEmailGateway = new MockEmailGatewayPlugin();
 var mockPaymentGateway = new MockPaymentGatewayPlugin();
-var mockStorageGateway = new MockStorageGatewayPlugin();
 var mockSagaEngine = new MockSagaEnginePlugin();
 
 using var orderStatusUpdatePublisher = new InProcessMessagePublisher<OrderStatusUpdateNotificationContract>(
@@ -39,7 +41,7 @@ var httpEndpoint = ServiceBootstrap.CreateHttpEndpoint(
         builder.Services.AddSingleton<ICheckoutEntityRepository>(entityRepository);
         builder.Services.AddSingleton<IMessagePublisher<OrderStatusUpdateNotificationContract>>(orderStatusUpdatePublisher);
         builder.Services.AddSingleton<ISagaEnginePlugin>(mockSagaEngine);
-        builder.Services.AddSingleton<IStorageGatewayPlugin>(mockStorageGateway);
+        builder.Services.AddSingleton<IStorageGatewayPlugin>(storageGateway);
         builder.Services.AddSingleton<IEmailGatewayPlugin>(mockEmailGateway);
         builder.Services.AddSingleton<IPaymentGatewayPlugin>(mockPaymentGateway);
     });

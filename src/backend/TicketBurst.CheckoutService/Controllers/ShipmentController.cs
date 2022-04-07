@@ -41,13 +41,48 @@ public class ShipmentController : ControllerBase
         var renderer = new TicketRenderer();
         var ticketsPdf = renderer.RenderTicketsToPdf(order.Tickets);
 
-        var composer = new EmailComposer();
-        using var emailMessage = composer.ComposeOrderCompletedEmail(order, ticketsPdf);
+        try
+        {
+            await UploadToStorage();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
 
-        await _storageGateway.UploadObject($"orders/{order.ReservationId}/tickets.pdf", ticketsPdf);
-        await _emailGateway.SendEmailMessage(emailMessage);
+        try
+        {
+            await SendEmail();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+
         await _entityRepo.UpdateOrderShippedStatus(order.OrderNumber, shippedAtUtc: DateTime.Now);
-
         return ApiResult.Success(200, "OK");
+        
+        async Task SendEmail()
+        {
+            var composer = new EmailComposer();
+            using var emailMessage = composer.ComposeOrderCompletedEmail(order, ticketsPdf);
+            await _emailGateway.SendEmailMessage(emailMessage);
+        }
+
+        async Task UploadToStorage()
+        {
+            var objectMetadata = new Dictionary<string, string> {
+                { "fileType", "tickets-pdf" },
+                { "orderNumber", order.OrderNumber.ToString() },
+                { "reservationId", order.ReservationId },
+                { "customerEmail", order.CustomerEmail },
+            };
+
+            await _storageGateway.UploadObject(
+                objectKey: $"order/{order.OrderNumber}/tickets.pdf", 
+                contents: ticketsPdf, 
+                contentType: "application/pdf",
+                metadata: objectMetadata);
+        }
     }
 }

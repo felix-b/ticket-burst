@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using TicketBurst.ServiceInfra;
 
 namespace TicketBurst.CheckoutService.Integrations;
 
@@ -13,7 +14,7 @@ public class MockStorageGatewayPlugin : IStorageGatewayPlugin
         Directory.CreateDirectory(__storageFolderPath);
     }
 
-    public async Task UploadObject(string objectKey, byte[] contents)
+    public async Task UploadObject(string objectKey, byte[] contents, string contentType, IDictionary<string, string>? metadata = null)
     {
         var filePath = Path.Combine(
             __storageFolderPath,

@@ -1,6 +1,6 @@
 ﻿using TicketBurst.Contracts;
 
-namespace TicketBurst.CheckoutService.Integrations;
+namespace TicketBurst.ServiceInfra;
 
 public interface ISagaEnginePlugin
 {
