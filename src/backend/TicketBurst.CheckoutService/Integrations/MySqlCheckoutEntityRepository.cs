@@ -15,12 +15,14 @@ public class MySqlCheckoutEntityRepository : ICheckoutEntityRepository
     private readonly string _connectionString;
     private readonly PooledDbContextFactory<CheckoutDbContext> _dbContextFactory;
 
-    public MySqlCheckoutEntityRepository(ISecretsManagerPlugin secrets)
+    public MySqlCheckoutEntityRepository(ISecretsManagerPlugin secrets, string? overrideConnectionString = null)
     {
         var connectionSecret = secrets.GetConnectionStringSecret("checkout-db-connstr").Result;
-        _connectionString = 
-            $"server=${connectionSecret.Server};database=checkout_service;" + 
+        _connectionString = overrideConnectionString ??
+            $"server=${connectionSecret.Server};port=${connectionSecret.Port};database=checkout_service;" + 
             $"user=${connectionSecret.UserName};password=${connectionSecret.Password}";
+        
+        Console.WriteLine($"MySqlCheckoutEntityRepository> using connection string [${_connectionString}]");
 
         var options = new DbContextOptionsBuilder<CheckoutDbContext>()
             .UseLazyLoadingProxies(true)

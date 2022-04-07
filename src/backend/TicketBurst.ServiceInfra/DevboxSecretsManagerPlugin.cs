@@ -9,7 +9,7 @@ public class DevboxSecretsManagerPlugin : ISecretsManagerPlugin
         switch (secretName)
         {
             case "checkout-db-connstr":
-                return new ConnectionStringSecret(Server: "localhost", UserName: "root", Password: "rootpass1");
+                return new ConnectionStringSecret(Server: "localhost", Port: 3306, UserName: "root", Password: "rootpass1");
             default:
                 throw new ArgumentException("Unknown secret", paramName: nameof(secretName));
         }
