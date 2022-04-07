@@ -22,7 +22,7 @@ public class TicketRenderer
                 page.ContinuousSize(595.4f, Unit.Point);
                 page.Margin(2, Unit.Centimetre);
                 page.PageColor(Colors.White);
-                page.DefaultTextStyle(x => x.FontSize(20));
+                page.DefaultTextStyle(style => ApplyPlatformFonts(style).FontSize(20));
 
                 page.Header()
                     .Text("Tickets - Print at Home")
@@ -40,6 +40,13 @@ public class TicketRenderer
                     });
             });
         });
+    }
+    
+    private TextStyle ApplyPlatformFonts(TextStyle style)
+    {
+        return OperatingSystem.IsLinux()
+            ? style.FontFamily("DejaVu Sans")
+            : style;
     }
 
     private static void RenderTicket(ColumnDescriptor column, TicketContract ticket)
@@ -91,3 +98,15 @@ public class TicketRenderer
             });
     }
 }
+
+
+/*
+
+/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf: DejaVu Serif:style=Bold
+/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf: DejaVu Sans Mono:style=Book
+/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf: DejaVu Sans:style=Book
+/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf: DejaVu Sans:style=Bold
+/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf: DejaVu Sans Mono:style=Bold
+/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf: DejaVu Serif:style=Book
+
+*/
