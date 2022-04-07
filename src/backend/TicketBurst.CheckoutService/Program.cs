@@ -48,8 +48,9 @@ httpEndpoint.Run();
 
 ICheckoutEntityRepository UseRealDatabase()
 {
-    Console.WriteLine("Using MYSQL DB.");
-    return new MySqlCheckoutEntityRepository(secretsManager);
+    var overrideConnectionString = Environment.GetEnvironmentVariable("CHECKOUTDB_CONNSTR");
+    Console.WriteLine($"Using MYSQL DB. ConStr override [${(overrideConnectionString ?? "N/A")}]");
+    return new MySqlCheckoutEntityRepository(secretsManager, overrideConnectionString);
 }
 
 ICheckoutEntityRepository UseMockDatabase()
