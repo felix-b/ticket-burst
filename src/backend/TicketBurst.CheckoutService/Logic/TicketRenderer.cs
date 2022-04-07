@@ -75,7 +75,7 @@ public class TicketRenderer
                     gridIn.Item().AlignCenter().AlignBottom().Text("Row");
                     gridIn.Item().AlignCenter().AlignBottom().Text("Seat");
                     gridIn.Item();
-                    gridIn.Item(columns: 4).AlignCenter().AlignBottom().Text(ticket.StartLocalTime.ToString("dd MMM yy")).FontSize(12).Bold();
+                    gridIn.Item(columns: 4).AlignCenter().AlignBottom().Text(ticket.StartLocalTime.ToString("dd MMMM yyyy")).FontSize(12).Bold();
                     gridIn.Item();
                     gridIn.Item(columns: 2).AlignCenter().AlignBottom().Text($"Price {ticket.PriceLevelName}");
                     gridIn.Item();
@@ -85,15 +85,15 @@ public class TicketRenderer
                     gridIn.Item().AlignCenter().AlignTop().Text(ticket.RowName).FontSize(13).Bold();
                     gridIn.Item().AlignCenter().AlignTop().Text(ticket.SeatName).FontSize(13).Bold();
                     gridIn.Item();
-                    gridIn.Item(columns: 4).AlignCenter().AlignTop().Text(ticket.StartLocalTime.ToString("HH:mm")).FontSize(13).Bold();
+                    gridIn.Item(columns: 4).AlignCenter().AlignTop().Text(ticket.StartLocalTime.ToString("HH:mm")).FontSize(12).Bold();
                     gridIn.Item();
-                    gridIn.Item(columns: 2).AlignCenter().AlignTop().Text($"${ticket.Price}").FontSize(13).Bold();
+                    gridIn.Item(columns: 2).AlignCenter().AlignTop().Text($"${ticket.Price.ToString("#,##0.00")}").FontSize(12).Bold();
                     gridIn.Item();
 
-                    gridIn.Item(columns: 13).AlignCenter().AlignMiddle().Text($"{ticket.ShowTitle} {ticket.EventTitle}").FontSize(16).Bold();
+                    gridIn.Item(columns: 13).AlignCenter().AlignMiddle().Text($"{ticket.ShowTitle} {ticket.EventTitle}").FontSize(14).Bold();
 
-                    gridIn.Item(columns: 13).AlignCenter().AlignMiddle().Text(ticket.VenueName).FontSize(14).Bold();
-                    gridIn.Item(columns: 13).AlignCenter().AlignMiddle().Text(ticket.VenueAddress).FontSize(12);
+                    gridIn.Item(columns: 13).AlignCenter().AlignMiddle().Text(ticket.VenueName).FontSize(12).Bold();
+                    gridIn.Item(columns: 13).AlignCenter().AlignMiddle().Text(ticket.VenueAddress).FontSize(10);
                 });
             });
     }
