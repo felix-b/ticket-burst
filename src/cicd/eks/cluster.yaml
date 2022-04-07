@@ -62,3 +62,6 @@ gitops:
       namespace: "flux-system"
       path: "clusters/demo"
       components-extra: "image-reflector-controller,image-automation-controller"
+
+# modifications after creation:
+# eksctl utils associate-iam-oidc-provider --cluster ticketburst-cluster --approve

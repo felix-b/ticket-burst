@@ -35,9 +35,11 @@ spec:
         appsvc: ticketburst-reservation
       containers:
       - name: ticketburst-services-reservation
-        image: 381777116710.dkr.ecr.eu-south-1.amazonaws.com/ticketburst-reservation:46f0610
+        image: 381777116710.dkr.ecr.eu-south-1.amazonaws.com/ticketburst-reservation:9e85aaa
         ports:
         - containerPort: 80
+        command: ["/app/reservationd"]
+        args: ["--aws"]
         env:
         - name: TICKETBURST_SERVICEMAP_SEARCH
           value: ticketburst-search-service.default

@@ -35,9 +35,11 @@ spec:
         appsvc: ticketburst-search
       containers:
       - name: ticketburst-services-search
-        image: 381777116710.dkr.ecr.eu-south-1.amazonaws.com/ticketburst-search:46f0610
+        image: 381777116710.dkr.ecr.eu-south-1.amazonaws.com/ticketburst-search:9e85aaa
         ports:
         - containerPort: 80
+        command: ["/app/searchd"]
+        args: ["--aws"]
         env:
         - name: TICKETBURST_SERVICEMAP_SEARCH
           value: ticketburst-search-service.default
