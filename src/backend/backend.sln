@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TicketBurst.CheckoutService
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TicketBurst.ServiceInfra.Aws", "TicketBurst.ServiceInfra.Aws\TicketBurst.ServiceInfra.Aws.csproj", "{EBD5B69F-BB4B-4632-B1F8-F028C4E29192}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TicketBurst.Contracts.Proto", "TicketBurst.Contracts.Proto\TicketBurst.Contracts.Proto.csproj", "{D3829BE1-48EE-4F41-AF86-EA45C702A4F2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -114,5 +116,17 @@ Global
 		{EBD5B69F-BB4B-4632-B1F8-F028C4E29192}.Release|x64.Build.0 = Release|Any CPU
 		{EBD5B69F-BB4B-4632-B1F8-F028C4E29192}.Release|x86.ActiveCfg = Release|Any CPU
 		{EBD5B69F-BB4B-4632-B1F8-F028C4E29192}.Release|x86.Build.0 = Release|Any CPU
+		{D3829BE1-48EE-4F41-AF86-EA45C702A4F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D3829BE1-48EE-4F41-AF86-EA45C702A4F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D3829BE1-48EE-4F41-AF86-EA45C702A4F2}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D3829BE1-48EE-4F41-AF86-EA45C702A4F2}.Debug|x64.Build.0 = Debug|Any CPU
+		{D3829BE1-48EE-4F41-AF86-EA45C702A4F2}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D3829BE1-48EE-4F41-AF86-EA45C702A4F2}.Debug|x86.Build.0 = Debug|Any CPU
+		{D3829BE1-48EE-4F41-AF86-EA45C702A4F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D3829BE1-48EE-4F41-AF86-EA45C702A4F2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D3829BE1-48EE-4F41-AF86-EA45C702A4F2}.Release|x64.ActiveCfg = Release|Any CPU
+		{D3829BE1-48EE-4F41-AF86-EA45C702A4F2}.Release|x64.Build.0 = Release|Any CPU
+		{D3829BE1-48EE-4F41-AF86-EA45C702A4F2}.Release|x86.ActiveCfg = Release|Any CPU
+		{D3829BE1-48EE-4F41-AF86-EA45C702A4F2}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

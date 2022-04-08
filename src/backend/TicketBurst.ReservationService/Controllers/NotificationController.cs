@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 using TicketBurst.Contracts;
-using TicketBurst.ReservationService.Actors;
 using TicketBurst.ReservationService.Integrations;
 using TicketBurst.ReservationService.Jobs;
 using TicketBurst.ServiceInfra;

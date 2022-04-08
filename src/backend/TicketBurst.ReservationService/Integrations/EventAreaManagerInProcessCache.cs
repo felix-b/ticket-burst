@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using TicketBurst.ReservationService.Actors;
+using TicketBurst.ReservationService.Contracts;
 
 namespace TicketBurst.ReservationService.Integrations;
 
@@ -11,6 +12,18 @@ public class EventAreaManagerInProcessCache : IActorEngine
     public EventAreaManagerInProcessCache(IReservationEntityRepository entityRepo)
     {
         _entityRepo = entityRepo;
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        // do nothing
+        return ValueTask.CompletedTask; 
+    }
+
+    public Task StartAsync()
+    {
+        // do nothing
+        return Task.CompletedTask;
     }
 
     public async Task<IEventAreaManager?> GetActor(string eventId, string areaId)
@@ -48,7 +61,7 @@ public class EventAreaManagerInProcessCache : IActorEngine
         }
     }
 
-    public async Task ForEachActor(Func<IEventAreaManager, Task> action)
+    public async Task ForEachLocalActor(Func<IEventAreaManager, Task> action)
     {
         var snapshot = _loadPromiseByEventAreaKey.Values.ToArray();
         

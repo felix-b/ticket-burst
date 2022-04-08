@@ -1,9 +1,11 @@
 ﻿using TicketBurst.ReservationService.Actors;
+using TicketBurst.ReservationService.Contracts;
 
 namespace TicketBurst.ReservationService.Integrations;
 
-public interface IActorEngine
+public interface IActorEngine : IAsyncDisposable
 {
+    Task StartAsync();
     Task<IEventAreaManager?> GetActor(string eventId, string areaId);
-    Task ForEachActor(Func<IEventAreaManager, Task> action);
+    Task ForEachLocalActor(Func<IEventAreaManager, Task> action);
 }

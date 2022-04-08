@@ -1,5 +1,4 @@
-﻿using TicketBurst.ReservationService.Actors;
-using TicketBurst.ReservationService.Integrations;
+﻿using TicketBurst.ReservationService.Integrations;
 using TicketBurst.ServiceInfra;
 
 namespace TicketBurst.ReservationService.Jobs;
@@ -26,7 +25,7 @@ public class ReservationExpiryJob : IDisposable
 
     private void HandleTimerTick()
     {
-        _actorEngine.ForEachActor(async actor => {
+        _actorEngine.ForEachLocalActor(async actor => {
             Console.WriteLine($"RESERVATION EXPIRY JOB > EAM[${actor.EventId}/${actor.AreaId}]");
             await actor.ReleaseExpiredReservations();
         }).Wait();        

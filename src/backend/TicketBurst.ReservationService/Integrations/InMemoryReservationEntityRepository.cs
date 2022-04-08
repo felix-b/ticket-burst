@@ -1,4 +1,5 @@
-﻿using TicketBurst.ReservationService.Contracts;
+﻿using TicketBurst.Contracts;
+using TicketBurst.ReservationService.Contracts;
 using TicketBurst.ServiceInfra;
 
 namespace TicketBurst.ReservationService.Integrations;

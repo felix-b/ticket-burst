@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 using TicketBurst.Contracts;
-using TicketBurst.ReservationService.Actors;
 using TicketBurst.ReservationService.Contracts;
 using TicketBurst.ReservationService.Integrations;
 using TicketBurst.ServiceInfra;
@@ -86,7 +85,7 @@ public class ReservationController : ControllerBase
             return ApiResult.Error(400);
         }
 
-        ReservationJournalRecord? record = actor.FindEffectiveJournalRecordById(reservationId);
+        ReservationJournalRecord? record = await actor.FindEffectiveJournalRecordById(reservationId);
         if (record == null)
         {
             return ApiResult.Error(404);
@@ -119,7 +118,7 @@ public class ReservationController : ControllerBase
             return ApiResult.Error(404);
         }
 
-        var notification = actor.GetUpdateNotification();
+        var notification = await actor.GetUpdateNotification();
         return ApiResult.Success(200, notification);
     }
     

@@ -1,5 +1,4 @@
 ﻿using System.Collections.Immutable;
-using System.Net;
 using TicketBurst.Contracts;
 using TicketBurst.ReservationService.Contracts;
 using TicketBurst.ReservationService.Integrations;
@@ -63,6 +62,12 @@ public class EventAreaManager : IEventAreaManager
         _seatingMapId = map.SeatingMapId;
     }
 
+    public Task Ping()
+    {
+        // do nothing
+        return Task.CompletedTask;
+    }
+
     public async Task<SeatReservationReplyContract> TryReserveSeats(SeatReservationRequestContract request)
     {
         lock (_syncRoot)
@@ -109,13 +114,13 @@ public class EventAreaManager : IEventAreaManager
         }
     }
 
-    public EventAreaUpdateNotificationContract GetUpdateNotification()
+    public Task<EventAreaUpdateNotificationContract> GetUpdateNotification()
     {
         var snapshot = _seatById;
         var totalCapacity = snapshot.Count;
         var availableCapacity = snapshot.Values.Count(seat => seat.Status == SeatStatus.Available);
 
-        return new EventAreaUpdateNotificationContract(
+        var result = new EventAreaUpdateNotificationContract(
             Id: _entityRepo.MakeNewId(),
             SequenceNo: _lastJournalSequenceNo,
             PublishedAtUtc: DateTime.UtcNow,
@@ -126,6 +131,8 @@ public class EventAreaManager : IEventAreaManager
             StatusBySeatId: snapshot.Values.ToImmutableDictionary(
                 keySelector: e => e.Seat.Id, 
                 elementSelector: e => e.Status));
+
+        return Task.FromResult(result);
     }
 
     public Task ReleaseExpiredReservations()
@@ -165,7 +172,7 @@ public class EventAreaManager : IEventAreaManager
         return Task.CompletedTask;
     }
 
-    public ReservationJournalRecord? FindEffectiveJournalRecordById(string reservationId)
+    public Task<ReservationJournalRecord?> FindEffectiveJournalRecordById(string reservationId)
     {
         lock (_syncRoot)
         {
@@ -173,17 +180,17 @@ public class EventAreaManager : IEventAreaManager
             {
                 if (seat.LastRecord?.Id == reservationId)
                 {
-                    return seat.LastRecord;
+                    return Task.FromResult<ReservationJournalRecord?>(seat.LastRecord);
                 }
             }
 
-            return null;
+            return Task.FromResult<ReservationJournalRecord?>(null);
         }
     }
 
     public async Task<bool> UpdateReservationPerOrderStatus(string reservationId, uint orderNumber, OrderStatus orderStatus)
     {
-        var effectiveRecord = FindEffectiveJournalRecordById(reservationId);
+        var effectiveRecord = await FindEffectiveJournalRecordById(reservationId);
         if (effectiveRecord == null || 
             effectiveRecord.Action != ReservationAction.TemporarilyReserve || 
             effectiveRecord.ResultStatus != SeatStatus.Reserved)

@@ -1,5 +1,4 @@
 ﻿using System.Collections.Immutable;
-using TicketBurst.ReservationService.Actors;
 using TicketBurst.ReservationService.Integrations;
 using TicketBurst.ServiceInfra;
 
@@ -7,8 +6,8 @@ namespace TicketBurst.ReservationService.Jobs;
 
 public class EventWarmupJob : InProcessJob<EventWarmupJob.WorkItem>
 {
-    public EventWarmupJob(EventAreaManagerInProcessCache cache) 
-        : base(nameof(EventWarmupJob), boundCapacity: 1000, CreateDoWork(cache))
+    public EventWarmupJob(IActorEngine actorEngine) 
+        : base(nameof(EventWarmupJob), boundCapacity: 1000, CreateDoWork(actorEngine))
     {
     }
 
@@ -17,12 +16,16 @@ public class EventWarmupJob : InProcessJob<EventWarmupJob.WorkItem>
         EnqueueWorkItem(new WorkItem(eventId, areaIds));
     }
 
-    private static Func<WorkItem, Task> CreateDoWork(EventAreaManagerInProcessCache cache)
+    private static Func<WorkItem, Task> CreateDoWork(IActorEngine actorEngine)
     {
         return async workItem => {
             foreach (var areaId in workItem.AreaIds)
             {
-                await cache.GetActor(workItem.EventId, areaId);
+                var actor = await actorEngine.GetActor(workItem.EventId, areaId);
+                if (actor != null)
+                {
+                    await actor.Ping();
+                }
             }
         };
     }

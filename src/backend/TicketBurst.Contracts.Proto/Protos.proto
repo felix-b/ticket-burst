@@ -1,0 +1,82 @@
+﻿syntax = "proto3";
+package TicketBurst.Reservation;
+option csharp_namespace = "TicketBurst.Reservation.ProtoActor";
+
+import "google/protobuf/timestamp.proto";
+
+message PingRequest {
+}
+
+message PingResponse {
+}
+
+message TryReserveSeatsRequest {
+  string EventId = 1;
+  string AreaId = 2;
+  repeated string SeatIds = 3;
+}
+message TryReserveSeatsResponse {
+  TryReserveSeatsRequest Request = 1;
+  bool Success = 2;
+  optional string CheckoutToken = 3;
+  optional google.protobuf.Timestamp ReservationExpiryUtc = 4;
+  optional string ErrorCode = 5;
+}
+
+message FindEffectiveJournalRecordByIdRequest {
+  string ReservationId = 1;
+}
+message FindEffectiveJournalRecordByIdResponse {
+  optional ReservationJournalRecordMessage Record = 1;
+}
+message ReservationJournalRecordMessage {
+  string Id = 1;
+  google.protobuf.Timestamp CreatedAtUtc = 2;
+  string EventId = 3;
+  string HallAreaId = 4;
+  string HallSeatingMapId = 5;
+  uint64 SequenceNo = 6;
+  repeated string SeatIds = 7;
+  int32 ReservationAction = 8;
+  int32 ResultSeatStatus = 9;
+  optional uint32 OrderNumber = 10;
+}
+
+message UpdateReservationPerOrderStatusRequest {
+  string ReservationId = 1;
+  uint32 OrderNumber = 2;
+  int32 OrderStatus = 3;
+}
+message UpdateReservationPerOrderStatusResponse {
+  bool Updated = 1;
+}
+
+message GetUpdateNotificationRequest {
+}
+message GetUpdateNotificationResponse {
+  EventAreaUpdateNotificationMessage Notification = 1;
+}
+message EventAreaUpdateNotificationMessage {
+  string Id = 1;
+  uint64 SequenceNo = 2;
+  google.protobuf.Timestamp PublishedAtUtc = 3;
+  string EventId = 4;
+  string HallAreaId = 5;
+  int32 TotalCapacity = 6;
+  int32 AvailableCapacity = 7;
+  map<string, int32> StatusBySeatId = 8;
+}
+
+message ReleaseExpiredReservationsRequest {
+}
+message ReleaseExpiredReservationsResponse {
+}
+
+service EventAreaManagerGrain {
+  rpc Ping(PingRequest) returns (PingResponse) {}
+  rpc TryReserveSeats(TryReserveSeatsRequest) returns (TryReserveSeatsResponse) {}
+  rpc FindEffectiveJournalRecordById(FindEffectiveJournalRecordByIdRequest) returns (FindEffectiveJournalRecordByIdResponse) {}
+  rpc UpdateReservationPerOrderStatus(UpdateReservationPerOrderStatusRequest) returns (UpdateReservationPerOrderStatusResponse) {}
+  rpc GetUpdateNotification(GetUpdateNotificationRequest) returns (GetUpdateNotificationResponse) {}
+  rpc ReleaseExpiredReservations(ReleaseExpiredReservationsRequest) returns (ReleaseExpiredReservationsResponse) {}
+}

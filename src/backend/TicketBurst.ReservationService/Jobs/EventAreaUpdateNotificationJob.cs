@@ -1,5 +1,4 @@
 ﻿using TicketBurst.Contracts;
-using TicketBurst.ReservationService.Actors;
 using TicketBurst.ReservationService.Integrations;
 using TicketBurst.ServiceInfra;
 using Timer = System.Threading.Timer;
@@ -32,10 +31,9 @@ public class EventAreaUpdateNotificationJob : IDisposable
 
     private void HandleTimerTick()
     {
-        _actorEngine.ForEachActor(actor => {
-            var notification = actor.GetUpdateNotification();
+        _actorEngine.ForEachLocalActor(async actor => {
+            var notification = await actor.GetUpdateNotification();
             _publisher.Publish(notification);
-            return Task.CompletedTask;
         }).Wait();
     }
 }

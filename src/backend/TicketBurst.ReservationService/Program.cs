@@ -1,8 +1,7 @@
 ﻿using Microsoft.AspNetCore.DataProtection;
 using TicketBurst.Contracts;
-using TicketBurst.ReservationService;
-using TicketBurst.ReservationService.Actors;
 using TicketBurst.ReservationService.Integrations;
+using TicketBurst.ReservationService.Integrations.ProtoActor;
 using TicketBurst.ReservationService.Jobs;
 using TicketBurst.ServiceInfra;
 using TicketBurst.ServiceInfra.Aws;
@@ -20,19 +19,9 @@ var entityRepo = args.Contains("--mock-db")
 var dataProtectionProvider = isAwsEnvironment
     ? UseAwsKms()
     : null; 
-
-var mockActorEngine = new EventAreaManagerInProcessCache(entityRepo);
-
-using var reservationExpiryJob = new ReservationExpiryJob(mockActorEngine);
 using var notificationPublisher = new InProcessMessagePublisher<EventAreaUpdateNotificationContract>(
     receiverServiceName: ServiceName.Search,
     urlPath: new[] { "notify", "event-area-update" }); 
-
-using var notificationJob = new EventAreaUpdateNotificationJob(
-    mockActorEngine,
-    notificationPublisher);
-
-using var warmupJop = new EventWarmupJob(mockActorEngine);
 
 var httpEndpoint = ServiceBootstrap.CreateHttpEndpoint(
     serviceName: "ticketburst-services-reservation",
@@ -41,11 +30,22 @@ var httpEndpoint = ServiceBootstrap.CreateHttpEndpoint(
     commandLineArgs: args,
     dataProtectionProvider: dataProtectionProvider,
     configure: builder => {
-        builder.Services.AddSingleton<EventWarmupJob>(warmupJop);
+        builder.Services.AddSingleton<EventWarmupJob>();
         builder.Services.AddSingleton<IReservationEntityRepository>(entityRepo);
-        builder.Services.AddSingleton<IActorEngine>(mockActorEngine);
+        builder.Services.AddSingleton<IActorEngine, ProtoActorEngine>();
+        builder.Services.AddSingleton<ReservationExpiryJob>();
     });
 
+var services = httpEndpoint.Services;
+var actorEngine = services.GetRequiredService<IActorEngine>();
+using var warmupJop = services.GetRequiredService<EventWarmupJob>();
+using var reservationExpiryJob = services.GetRequiredService<ReservationExpiryJob>();
+using var notificationJob = new EventAreaUpdateNotificationJob(actorEngine, notificationPublisher);
+
+Console.WriteLine("Starting actor cluster.");
+actorEngine.StartAsync().Wait();
+
+Console.WriteLine("Starting HTTP endpoint.");
 httpEndpoint.Run();
 
 IDataProtectionProvider UseAwsKms()

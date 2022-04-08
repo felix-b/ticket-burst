@@ -1,15 +1,15 @@
 ﻿using TicketBurst.Contracts;
-using TicketBurst.ReservationService.Contracts;
 
-namespace TicketBurst.ReservationService.Actors;
+namespace TicketBurst.ReservationService.Contracts;
 
 public interface IEventAreaManager
 {
+    Task Ping();
     Task<SeatReservationReplyContract> TryReserveSeats(SeatReservationRequestContract request);
-    Task ReleaseExpiredReservations();
-    EventAreaUpdateNotificationContract GetUpdateNotification();
-    ReservationJournalRecord? FindEffectiveJournalRecordById(string reservationId);
+    Task<ReservationJournalRecord?> FindEffectiveJournalRecordById(string reservationId);
     Task<bool> UpdateReservationPerOrderStatus(string reservationId, uint orderNumber, OrderStatus orderStatus);
+    Task<EventAreaUpdateNotificationContract> GetUpdateNotification();
+    Task ReleaseExpiredReservations();
     string EventId { get; }
     string AreaId { get; }
 }
