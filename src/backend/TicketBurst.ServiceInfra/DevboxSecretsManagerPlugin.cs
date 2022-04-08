@@ -19,4 +19,9 @@ public class DevboxSecretsManagerPlugin : ISecretsManagerPlugin
                 throw new ArgumentException("Unknown secret", paramName: nameof(secretName));
         }
     }
+
+    public Task<EmailServiceSecret> GetEmailServiceSecret(string secretName)
+    {
+        throw new NotSupportedException();
+    }
 }

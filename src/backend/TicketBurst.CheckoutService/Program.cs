@@ -22,8 +22,10 @@ var entityRepository = args.Contains("--mock-db")
 IStorageGatewayPlugin storageGateway = isAwsEnvironment
     ? new AwsS3StorageGatewayPlugin()
     : new MockStorageGatewayPlugin();
+IEmailGatewayPlugin emailGateway = isAwsEnvironment 
+    ? UseAwsSesEmailGateway()
+    : UseDevboxEmailGateway();
 
-var mockEmailGateway = new MockEmailGatewayPlugin();
 var mockPaymentGateway = new MockPaymentGatewayPlugin();
 var mockSagaEngine = new MockSagaEnginePlugin();
 
@@ -42,7 +44,7 @@ var httpEndpoint = ServiceBootstrap.CreateHttpEndpoint(
         builder.Services.AddSingleton<IMessagePublisher<OrderStatusUpdateNotificationContract>>(orderStatusUpdatePublisher);
         builder.Services.AddSingleton<ISagaEnginePlugin>(mockSagaEngine);
         builder.Services.AddSingleton<IStorageGatewayPlugin>(storageGateway);
-        builder.Services.AddSingleton<IEmailGatewayPlugin>(mockEmailGateway);
+        builder.Services.AddSingleton<IEmailGatewayPlugin>(emailGateway);
         builder.Services.AddSingleton<IPaymentGatewayPlugin>(mockPaymentGateway);
     });
 
@@ -64,4 +66,17 @@ IDataProtectionProvider UseAwsKms()
 {
     Console.WriteLine("Using AWS KMS.");
     return new AwsKmsDataProtectionProvider();
+}
+
+IEmailGatewayPlugin UseAwsSesEmailGateway()
+{
+    Console.WriteLine("Using AWS SES.");
+    var secret = secretsManager.GetEmailServiceSecret("ses-params").Result;
+    return new AwsSesEmailGatewayPlugin(secret);
+}
+
+IEmailGatewayPlugin UseDevboxEmailGateway()
+{
+    Console.WriteLine("Using DEVBOX email gateway.");
+    return new DevboxEmailGatewayPlugin();
 }

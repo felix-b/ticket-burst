@@ -31,4 +31,27 @@ public class AwsSecretsManagerPlugin : ISecretsManagerPlugin
 
         return secret;
     }
+
+    public async Task<EmailServiceSecret> GetEmailServiceSecret(string secretName)
+    {
+        var json = await _cache.GetSecretString(secretName);
+        
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            throw new Exception($"AwsSecretsManagerPlugin: unable to retrieve string secret [{secretName}]");
+        }
+        
+        var secret = JsonSerializer.Deserialize<EmailServiceSecret>(json, new JsonSerializerOptions {
+            PropertyNameCaseInsensitive = true
+        });
+
+        if (string.IsNullOrWhiteSpace(secret?.Role) || string.IsNullOrWhiteSpace(secret?.Region))
+        {
+            throw new Exception($"AwsSecretsManagerPlugin: unable to parse emailsvc secret [{secretName}]");
+        }
+
+        return secret;
+    }
+
+    public record StringValueSecret(string Value);
 }

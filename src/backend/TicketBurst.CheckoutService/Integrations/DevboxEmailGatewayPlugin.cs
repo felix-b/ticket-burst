@@ -6,13 +6,13 @@ using TicketBurst.ServiceInfra;
 
 namespace TicketBurst.CheckoutService.Integrations;
 
-public class MockEmailGatewayPlugin : IEmailGatewayPlugin
+public class DevboxEmailGatewayPlugin : IEmailGatewayPlugin
 {
     private static readonly string __outboxFolderPath = Path.Combine(
         Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)!,
         "mock-email-outbox");
     
-    public MockEmailGatewayPlugin()
+    public DevboxEmailGatewayPlugin()
     {
         Directory.CreateDirectory(__outboxFolderPath);
     }
