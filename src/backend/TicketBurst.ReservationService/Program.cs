@@ -12,9 +12,12 @@ var isAwsEnvironment = args.Contains("--aws");
 var httpPort = args.Contains("--http-port")
     ? Int32.Parse(args[Array.IndexOf(args, "--http-port") + 1])
     : 3002;
-var actorPort = args.Contains("--actor-port")
-    ? Int32.Parse(args[Array.IndexOf(args, "--actor-port") + 1])
-    : 0;
+// var actorPort = args.Contains("--actor-port")
+//     ? Int32.Parse(args[Array.IndexOf(args, "--actor-port") + 1])
+//     : 0;
+
+K8sClusterInfoProvider info = new K8sClusterInfoProvider();
+
 ISecretsManagerPlugin secretsManager = isAwsEnvironment
     ? new AwsSecretsManagerPlugin()
     : new DevboxSecretsManagerPlugin(); 
