@@ -16,7 +16,7 @@ var httpPort = args.Contains("--http-port")
 //     ? Int32.Parse(args[Array.IndexOf(args, "--actor-port") + 1])
 //     : 0;
 
-K8sClusterInfoProvider info = new K8sClusterInfoProvider();
+K8sClusterInfoProvider k8sClusterInfo = new K8sClusterInfoProvider("ticketburst-reservation-deployment", "default");
 
 ISecretsManagerPlugin secretsManager = isAwsEnvironment
     ? new AwsSecretsManagerPlugin()
@@ -43,6 +43,7 @@ var httpEndpoint = ServiceBootstrap.CreateHttpEndpoint(
         builder.Services.AddSingleton<IActorEngine>(new EventAreaManagerInProcessCache(entityRepo));
         //builder.Services.AddSingleton<IActorEngine, ProtoActorEngine>(provider => new ProtoActorEngine(provider, actorPort));
         builder.Services.AddSingleton<ReservationExpiryJob>();
+        builder.Services.AddSingleton<IClusterInfoProvider>(k8sClusterInfo);
     });
 
 var services = httpEndpoint.Services;

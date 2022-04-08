@@ -10,17 +10,19 @@ namespace TicketBurst.ReservationService.Controllers;
 public class DiagnosticsController : ControllerBase
 {
     private readonly IActorEngine _actorEngine;
+    private readonly IClusterInfoProvider _clusterInfo;
 
-    public DiagnosticsController(IActorEngine actorEngine)
+    public DiagnosticsController(IActorEngine actorEngine, IClusterInfoProvider clusterInfo)
     {
         _actorEngine = actorEngine;
+        _clusterInfo = clusterInfo;
     }
 
     [HttpGet]
     [ProducesResponseType(200)]
     [ProducesResponseType(404)]
-    public ActionResult<ClusterDiagnosticInfo> Get()
+    public ActionResult<ClusterInfo> Get()
     {
-        return ApiResult.Success(200, _actorEngine.GetClusterDiagnostics());
+        return ApiResult.Success(200, _clusterInfo.Current);
     }
 }
