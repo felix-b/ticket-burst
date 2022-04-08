@@ -15,6 +15,14 @@ public class DevboxSecretsManagerPlugin : ISecretsManagerPlugin
                     UserName: "root", 
                     Password: "rootpass1"
                 );
+            case "reservation-db-connstr":
+            case "search-db-connstr":
+                return new ConnectionStringSecret(
+                    Host: string.Empty, 
+                    Port: 0, 
+                    UserName: string.Empty, 
+                    Password: string.Empty
+                );
             default:
                 throw new ArgumentException("Unknown secret", paramName: nameof(secretName));
         }

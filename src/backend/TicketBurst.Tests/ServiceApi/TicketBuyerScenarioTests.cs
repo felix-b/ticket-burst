@@ -19,11 +19,7 @@ public class TicketBuyerScenarioTests
     [OneTimeSetUp]
     public void BeforeAll()
     {
-        ServiceClient.UseHosts(new Dictionary<ServiceName, string> {
-            { ServiceName.Search, "https://3cnuf521pd.execute-api.eu-south-1.amazonaws.com" },
-            { ServiceName.Reservation, "https://3cnuf521pd.execute-api.eu-south-1.amazonaws.com" },
-            { ServiceName.Checkout, "https://3cnuf521pd.execute-api.eu-south-1.amazonaws.com" },
-        });
+        ServiceClientSetup.UseForApiTest();
     }
     
     [Test]
@@ -39,9 +35,11 @@ public class TicketBuyerScenarioTests
         await ReceiveSuccessMessage(realOrder);
         await WaitForOrderCompleted(realOrder.OrderNumber);
 
-        /*
-        await WaitForTickets(realOrder);
-        
+        if (OperatingSystem.IsWindows())
+        {
+            await WaitForTickets(realOrder);
+        }
+
         async Task WaitForTickets(OrderContract order)
         {
             var outboxFolderPath =
@@ -60,7 +58,6 @@ public class TicketBuyerScenarioTests
             
             throw new AssertionFailedException("Order was not completed");
         }
-        */
 
         async Task WaitForOrderCompleted(uint orderNumber)
         {
