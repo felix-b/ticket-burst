@@ -7,7 +7,7 @@ using TicketBurst.ServiceInfra;
 
 namespace TicketBurst.ReservationService.Actors;
 
-public class EventAreaManager
+public class EventAreaManager : IEventAreaManager
 {
     public const int TemporaryReservationExpiryMinutes = 7;
     
@@ -38,7 +38,7 @@ public class EventAreaManager
         }
 
         var lastJournalRecordBySeatId = new Dictionary<string, ReservationJournalRecord>();
-        foreach (var record in _entityRepo.GetJournalEntriesForRecovery(EventId, AreaId))
+        await foreach (var record in _entityRepo.GetJournalEntriesForRecovery(EventId, AreaId))
         {
             foreach (var seatId in record.SeatIds)
             {
@@ -63,7 +63,7 @@ public class EventAreaManager
         _seatingMapId = map.SeatingMapId;
     }
 
-    public SeatReservationReplyContract TryReserveSeats(SeatReservationRequestContract request)
+    public async Task<SeatReservationReplyContract> TryReserveSeats(SeatReservationRequestContract request)
     {
         lock (_syncRoot)
         {
@@ -94,7 +94,7 @@ public class EventAreaManager
                 SeatIds: request.SeatIds.ToImmutableList(),
                 Action: ReservationAction.TemporarilyReserve,
                 ResultStatus: SeatStatus.Reserved);
-            ApplyJournalRecord(record);            
+            ApplyJournalRecord(record).Wait();            
 
             // MockDatabase.ReservationJournal.Append(record);
             // var seatByIdMutation = _seatById.ToBuilder();
@@ -128,7 +128,7 @@ public class EventAreaManager
                 elementSelector: e => e.Status));
     }
 
-    public void ReleaseExpiredReservations()
+    public Task ReleaseExpiredReservations()
     {
         var now = DateTime.UtcNow;
         var isReservationExpired = (SeatEntry entry) =>
@@ -153,7 +153,7 @@ public class EventAreaManager
                     SeatIds: entriesToRelease.Select(entry => entry.Seat.Id).ToImmutableList(),
                     Action: ReservationAction.ReleasePerTimeout,
                     ResultStatus: SeatStatus.Available);
-                ApplyJournalRecord(record);
+                ApplyJournalRecord(record).Wait();
 
                 entriesToRelease.ForEach(entry => {
                     Console.WriteLine(
@@ -161,6 +161,8 @@ public class EventAreaManager
                 });
             }
         }
+
+        return Task.CompletedTask;
     }
 
     public ReservationJournalRecord? FindEffectiveJournalRecordById(string reservationId)
@@ -179,7 +181,7 @@ public class EventAreaManager
         }
     }
 
-    public bool UpdateReservationPerOrderStatus(string reservationId, uint orderNumber, OrderStatus orderStatus)
+    public async Task<bool> UpdateReservationPerOrderStatus(string reservationId, uint orderNumber, OrderStatus orderStatus)
     {
         var effectiveRecord = FindEffectiveJournalRecordById(reservationId);
         if (effectiveRecord == null || 
@@ -202,14 +204,14 @@ public class EventAreaManager
                 : SeatStatus.Available
         };
         
-        ApplyJournalRecord(newRecord);
+        await ApplyJournalRecord(newRecord);
         return true;
     }
     
     public string EventId { get; }
     public string AreaId { get; }
 
-    private void ApplyJournalRecord(ReservationJournalRecord record)
+    private Task ApplyJournalRecord(ReservationJournalRecord record)
     {
         lock (_syncRoot)
         {
@@ -222,9 +224,11 @@ public class EventAreaManager
                 };
             }
 
-            _entityRepo.AppendJournalEntry(record);
+            _entityRepo.AppendJournalEntry(record).Wait();
             _seatById = mutation.ToImmutable();
         }
+
+        return Task.CompletedTask;
     }
 
     public record SeatEntry(

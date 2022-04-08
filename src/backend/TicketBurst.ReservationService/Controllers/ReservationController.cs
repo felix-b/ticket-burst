@@ -37,7 +37,9 @@ public class ReservationController : ControllerBase
             ? await _actorEngine.GetActor(request.EventId, request.HallAreaId)
             : null;
 
-        var response = EncryptCheckoutToken(actor?.TryReserveSeats(request));
+        var response = actor != null
+            ? EncryptCheckoutToken(await actor.TryReserveSeats(request))
+            : null;
         var reply = new ReplyContract<SeatReservationReplyContract>(
             response, 
             ServiceProcessMetadata.GetCombinedInfo()

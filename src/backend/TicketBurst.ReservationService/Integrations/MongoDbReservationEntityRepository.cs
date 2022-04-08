@@ -42,25 +42,24 @@ public class MongoDbReservationEntityRepository : IReservationEntityRepository
         return ObjectId.GenerateNewId().ToString();
     }
 
-    public IEnumerable<ReservationJournalRecord> GetJournalEntriesForRecovery(string eventId, string areaId)
+    public IAsyncEnumerable<ReservationJournalRecord> GetJournalEntriesForRecovery(string eventId, string areaId)
     {
         var eventObjectId = new ObjectId(eventId);
         var areaObjectId = new ObjectId(areaId);
 
-        var results = _journal.AsQueryable()
+        var cursor = _journal.AsQueryable()
             .Where(r => r.EventId == eventObjectId && r.HallAreaId == areaObjectId)
             .OrderBy(r => r.SequenceNo)
-            .ToArray()
-            .Select(r => r.ToImmutable());
-
-        return results;
+            .ToCursor();
+            
+        return cursor.AsTranslatingAsyncEnumerable(recordForDb => recordForDb.ToImmutable());
     }
 
-    public void AppendJournalEntry(ReservationJournalRecord record)
+    public async Task AppendJournalEntry(ReservationJournalRecord record)
     {
         var recordForDb = new ReservationJournalRecordForDb(record);
         Console.WriteLine($"MongoDbReservationEntityRepository::AppendJournalEntry> {JsonSerializer.Serialize(recordForDb)}");
-        _journal.InsertOne(recordForDb);
+        await _journal.InsertOneAsync(recordForDb);
     }
 
     public class ReservationJournalRecordForDb

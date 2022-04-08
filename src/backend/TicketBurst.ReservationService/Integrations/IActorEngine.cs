@@ -4,5 +4,6 @@ namespace TicketBurst.ReservationService.Integrations;
 
 public interface IActorEngine
 {
-    Task<EventAreaManager?> GetActor(string eventId, string areaId);
+    Task<IEventAreaManager?> GetActor(string eventId, string areaId);
+    Task ForEachActor(Func<IEventAreaManager, Task> action);
 }

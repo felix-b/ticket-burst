@@ -51,6 +51,7 @@ public class TicketBuyerScenarioTests
                 var allFiles = Directory.GetFiles(outboxFolderPath);
                 if (allFiles.Any(f => f.Contains(order.CustomerEmail)))
                 {
+                    Console.WriteLine("RECEIVED THE TICKETS!!!");
                     return;
                 }
                 await Task.Delay(TimeSpan.FromSeconds(10));

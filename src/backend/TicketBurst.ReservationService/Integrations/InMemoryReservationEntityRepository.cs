@@ -1,4 +1,5 @@
 ﻿using TicketBurst.ReservationService.Contracts;
+using TicketBurst.ServiceInfra;
 
 namespace TicketBurst.ReservationService.Integrations;
 
@@ -9,13 +10,14 @@ public class InMemoryReservationEntityRepository : IReservationEntityRepository
         return MockDatabase.MakeNewId();
     }
 
-    public IEnumerable<ReservationJournalRecord> GetJournalEntriesForRecovery(string eventId, string areaId)
+    public IAsyncEnumerable<ReservationJournalRecord> GetJournalEntriesForRecovery(string eventId, string areaId)
     {
-        return MockDatabase.ReservationJournal.All;
+        return MockDatabase.ReservationJournal.All.ToAsyncEnumerable();
     }
 
-    public void AppendJournalEntry(ReservationJournalRecord record)
+    public Task AppendJournalEntry(ReservationJournalRecord record)
     {
         MockDatabase.ReservationJournal.Append(record);
+        return Task.CompletedTask;
     }
 }

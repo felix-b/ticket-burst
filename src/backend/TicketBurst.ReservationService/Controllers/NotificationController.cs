@@ -84,7 +84,7 @@ public class NotificationController : ControllerBase
             return ApiResult.Error(400, "EventAreaNotFound");
         }
 
-        var success = actor.UpdateReservationPerOrderStatus(
+        var success = await actor.UpdateReservationPerOrderStatus(
             order.ReservationId,
             order.OrderNumber,
             order.Status);

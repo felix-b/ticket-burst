@@ -13,7 +13,7 @@ public class EventAreaManagerInProcessCache : IActorEngine
         _entityRepo = entityRepo;
     }
 
-    public async Task<EventAreaManager?> GetActor(string eventId, string areaId)
+    public async Task<IEventAreaManager?> GetActor(string eventId, string areaId)
     {
         string key = GetEventAreaKey(eventId, areaId);
 
@@ -48,7 +48,7 @@ public class EventAreaManagerInProcessCache : IActorEngine
         }
     }
 
-    public void ForEachActor(Action<EventAreaManager> action)
+    public async Task ForEachActor(Func<IEventAreaManager, Task> action)
     {
         var snapshot = _loadPromiseByEventAreaKey.Values.ToArray();
         
@@ -59,7 +59,7 @@ public class EventAreaManagerInProcessCache : IActorEngine
                 var actor = promise.Result;
                 if (actor != null)
                 {
-                    action(actor);
+                    await action(actor);
                 }
             }
             catch (Exception e)

@@ -8,15 +8,15 @@ namespace TicketBurst.ReservationService.Jobs;
 
 public class EventAreaUpdateNotificationJob : IDisposable
 {
-    private readonly EventAreaManagerInProcessCache _actorCache;
+    private readonly IActorEngine _actorEngine;
     private readonly IMessagePublisher<EventAreaUpdateNotificationContract> _publisher;
     private readonly Timer _timer;
 
     public EventAreaUpdateNotificationJob(
-        EventAreaManagerInProcessCache actorCache,
+        IActorEngine actorEngine,
         IMessagePublisher<EventAreaUpdateNotificationContract> publisher)
     {
-        _actorCache = actorCache;
+        _actorEngine = actorEngine;
         _publisher = publisher;
         _timer = new Timer(
             InProcessJob.WithTimerErrorHandling(this, HandleTimerTick), 
@@ -32,9 +32,10 @@ public class EventAreaUpdateNotificationJob : IDisposable
 
     private void HandleTimerTick()
     {
-        _actorCache.ForEachActor(actor => {
+        _actorEngine.ForEachActor(actor => {
             var notification = actor.GetUpdateNotification();
             _publisher.Publish(notification);
-        });
+            return Task.CompletedTask;
+        }).Wait();
     }
 }
