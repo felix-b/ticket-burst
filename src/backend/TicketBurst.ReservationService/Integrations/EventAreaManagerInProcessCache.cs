@@ -82,6 +82,17 @@ public class EventAreaManagerInProcessCache : IActorEngine
         }
     }
 
+    public ClusterDiagnosticInfo GetClusterDiagnostics()
+    {
+        return new ClusterDiagnosticInfo(
+            Address: string.Empty,
+            ClusterName: string.Empty,
+            ThisMember: new MemberDiagnosticInfo(string.Empty, string.Empty, string.Empty, 0),
+            OtherMembers: new MemberDiagnosticInfo[0],
+            LocalGrains: new string[0]
+        );
+    }
+
     private async Task<EventAreaManager?> LoadActor(string eventId, string areaId)
     {
         var actor = new EventAreaManager(eventId, areaId, _entityRepo);

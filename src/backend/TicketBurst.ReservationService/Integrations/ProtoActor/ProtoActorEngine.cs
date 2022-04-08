@@ -20,22 +20,26 @@ public class ProtoActorEngine : IActorEngine
     private readonly object _localGrainsSyncRoot = new();
     private ImmutableHashSet<EventAreaManagerGrain> _localGrains;
 
-    public ProtoActorEngine(IServiceProvider serviceProvider)
+    public ProtoActorEngine(IServiceProvider serviceProvider, int listenPort = 0)
     {
         _serviceProvider = serviceProvider;
         _localGrains = ImmutableHashSet<EventAreaManagerGrain>.Empty;
         
-        Proto.Log.SetLoggerFactory(LoggerFactory.Create(l => l.AddConsole().SetMinimumLevel(LogLevel.Information)));
+        Proto.Log.SetLoggerFactory(LoggerFactory.Create(l => l.AddConsole().SetMinimumLevel(LogLevel.Debug)));
         
         // Required to allow unencrypted GrpcNet connections
         AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
 
         _actorSystem = new ActorSystem(new ActorSystemConfig().WithDeveloperSupervisionLogging(true))
-            .WithRemote(GrpcNetRemoteConfig.BindToLocalhost(8090).WithProtoMessages(ProtosReflection.Descriptor))
+            .WithRemote(GrpcNetRemoteConfig.BindToLocalhost(listenPort).WithProtoMessages(ProtosReflection.Descriptor))
             .WithCluster(ClusterConfig
                 .Setup(
                     clusterName: "TicketBurstReservationCluster", 
-                    clusterProvider: new SeedNodeClusterProvider(), 
+                    clusterProvider: new SeedNodeClusterProvider(
+                        listenPort == 0
+                            ? new SeedNodeClusterProviderOptions(("127.0.0.1", 8080))
+                            : null
+                    ), 
                     identityLookup: new PartitionIdentityLookup()
                 )
                 .WithClusterKind(
@@ -113,5 +117,22 @@ public class ProtoActorEngine : IActorEngine
         }
     }
 
+    public ClusterDiagnosticInfo GetClusterDiagnostics()
+    {
+        var cluster = _actorSystem.Cluster();
+        return new ClusterDiagnosticInfo(
+            Address: _actorSystem.Address,
+            ClusterName: cluster.Config.ClusterName,
+            ThisMember: GetMemberDiagnostics(cluster.MemberList.Self),
+            OtherMembers: cluster.MemberList.GetOtherMembers().Select(GetMemberDiagnostics).ToArray(),
+            LocalGrains: _localGrains.Select(g => g.Identity).ToArray()
+        );
+    }
+
     public Cluster Cluster => _actorSystem.Cluster();
+    
+    private MemberDiagnosticInfo GetMemberDiagnostics(Member  source)
+    {
+        return new MemberDiagnosticInfo(Id: source.Id, Address: source.Address, Host: source.Host, Port: source.Port);
+    }
 }

@@ -1,5 +1,4 @@
 ﻿using System.Collections.Immutable;
-using k8s;
 using TicketBurst.Contracts;
 
 namespace TicketBurst.ServiceInfra;
