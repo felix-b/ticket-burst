@@ -29,7 +29,7 @@ public record ClusterInfo(
 
     public static readonly ClusterInfo DevboxDefault = new ClusterInfo(
         MemberCount: 1,
-        MemberHostNames: ImmutableList<string>.Empty.Add($"{Environment.MachineName}:8090"),
+        MemberHostNames: ImmutableList<string>.Empty.Add($"localhost:8090"),
         ThisMemberIndex: 0,
         Generation: 1);
 }

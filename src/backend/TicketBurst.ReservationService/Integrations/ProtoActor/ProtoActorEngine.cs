@@ -101,6 +101,12 @@ public class ProtoActorEngine : IActorEngine
         }
     }
 
+    public string[] GetLocalActorIds()
+    {
+        // ReSharper disable once InconsistentlySynchronizedField
+        return _localGrains.Select(grain => grain.Identity).ToArray();
+    }
+
     public void RegisterLocalGrain(EventAreaManagerGrain grain)
     {
         lock (_localGrainsSyncRoot)
@@ -117,22 +123,22 @@ public class ProtoActorEngine : IActorEngine
         }
     }
 
-    public ClusterDiagnosticInfo GetClusterDiagnostics()
-    {
-        var cluster = _actorSystem.Cluster();
-        return new ClusterDiagnosticInfo(
-            Address: _actorSystem.Address,
-            ClusterName: cluster.Config.ClusterName,
-            ThisMember: GetMemberDiagnostics(cluster.MemberList.Self),
-            OtherMembers: cluster.MemberList.GetOtherMembers().Select(GetMemberDiagnostics).ToArray(),
-            LocalGrains: _localGrains.Select(g => g.Identity).ToArray()
-        );
-    }
+    // public ClusterDiagnosticInfo GetClusterDiagnostics()
+    // {
+    //     var cluster = _actorSystem.Cluster();
+    //     return new ClusterDiagnosticInfo(
+    //         Address: _actorSystem.Address,
+    //         ClusterName: cluster.Config.ClusterName,
+    //         ThisMember: GetMemberDiagnostics(cluster.MemberList.Self),
+    //         OtherMembers: cluster.MemberList.GetOtherMembers().Select(GetMemberDiagnostics).ToArray(),
+    //         LocalGrains: _localGrains.Select(g => g.Identity).ToArray()
+    //     );
+    // }
 
     public Cluster Cluster => _actorSystem.Cluster();
     
-    private MemberDiagnosticInfo GetMemberDiagnostics(Member  source)
-    {
-        return new MemberDiagnosticInfo(Id: source.Id, Address: source.Address, Host: source.Host, Port: source.Port);
-    }
+    // private MemberDiagnosticInfo GetMemberDiagnostics(Member  source)
+    // {
+    //     return new MemberDiagnosticInfo(Id: source.Id, Address: source.Address, Host: source.Host, Port: source.Port);
+    // }
 }

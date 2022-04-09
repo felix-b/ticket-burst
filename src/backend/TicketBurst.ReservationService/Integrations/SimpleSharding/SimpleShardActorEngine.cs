@@ -1,4 +1,5 @@
-﻿using TicketBurst.ReservationService.Contracts;
+﻿using System.Threading.Channels;
+using TicketBurst.ReservationService.Contracts;
 using TicketBurst.ServiceInfra;
 
 namespace TicketBurst.ReservationService.Integrations.SimpleSharding;
@@ -32,7 +33,7 @@ public class SimpleShardActorEngine : IActorEngine
         throw new NotImplementedException();
     }
 
-    public ClusterDiagnosticInfo GetClusterDiagnostics()
+    public string[] GetLocalActorIds()
     {
         throw new NotImplementedException();
     }

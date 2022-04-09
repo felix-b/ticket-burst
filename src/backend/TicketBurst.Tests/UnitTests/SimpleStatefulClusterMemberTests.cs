@@ -1,4 +1,7 @@
-﻿using System;
+﻿#pragma warning disable CS1998
+#pragma warning disable CS8602
+
+using System;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;

@@ -12,13 +12,29 @@ var isAwsEnvironment = args.Contains("--aws");
 var httpPort = args.Contains("--http-port")
     ? Int32.Parse(args[Array.IndexOf(args, "--http-port") + 1])
     : 3002;
-// var actorPort = args.Contains("--actor-port")
-//     ? Int32.Parse(args[Array.IndexOf(args, "--actor-port") + 1])
-//     : 0;
+var actorPort = args.Contains("--actor-port")
+    ? Int32.Parse(args[Array.IndexOf(args, "--actor-port") + 1])
+    : 8090;
+var memberIndex = args.Contains("--member-index")
+    ? Int32.Parse(args[Array.IndexOf(args, "--member-index") + 1])
+    : 0;
 
-IClusterInfoProvider clusterInfoProvider = isAwsEnvironment
+using IClusterInfoProvider clusterInfoProvider = isAwsEnvironment
     ? new K8sClusterInfoProvider(serviceName: "ticketburst-reservation", namespaceName: "default")
-    : new DevboxClusterInfoProvider();
+    : new DevboxClusterInfoProvider(actorPort);
+
+var devboxInfo = clusterInfoProvider as DevboxClusterInfoProvider;
+await using var devboxClusterOrchestrator = (devboxInfo != null && memberIndex == 0 && !isAwsEnvironment)
+    ? new DevboxClusterOrchestrator(actorPort, devboxInfo)
+    : null;
+
+if (devboxInfo != null && devboxClusterOrchestrator == null && !isAwsEnvironment)
+{
+    devboxInfo.StartPollingForChanges();
+}
+
+using var statefulClusterMember = new SimpleStatefulClusterMember(clusterInfoProvider, enablePolling: true);
+
 ISecretsManagerPlugin secretsManager = isAwsEnvironment
     ? new AwsSecretsManagerPlugin()
     : new DevboxSecretsManagerPlugin(); 
@@ -45,6 +61,11 @@ var httpEndpoint = ServiceBootstrap.CreateHttpEndpoint(
         //builder.Services.AddSingleton<IActorEngine, ProtoActorEngine>(provider => new ProtoActorEngine(provider, actorPort));
         builder.Services.AddSingleton<ReservationExpiryJob>();
         builder.Services.AddSingleton<IClusterInfoProvider>(clusterInfoProvider);
+        builder.Services.AddSingleton(statefulClusterMember);
+        if (devboxClusterOrchestrator != null)
+        {
+            builder.Services.AddSingleton(devboxClusterOrchestrator);
+        }
     });
 
 var services = httpEndpoint.Services;
