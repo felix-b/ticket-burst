@@ -1,12 +1,12 @@
 ﻿using Microsoft.AspNetCore.DataProtection;
 using TicketBurst.Contracts;
 using TicketBurst.ReservationService.Integrations;
-using TicketBurst.ReservationService.Integrations.ProtoActor;
 using TicketBurst.ReservationService.Jobs;
 using TicketBurst.ServiceInfra;
 using TicketBurst.ServiceInfra.Aws;
 
 Console.WriteLine("TicketBurst Reservation Service starting.");
+Console.WriteLine($"K8s? {(K8sClusterInfoProvider.IsK8sEnvironment() ? "YES" : "NO")}");
 
 var isAwsEnvironment = args.Contains("--aws");
 var httpPort = args.Contains("--http-port")
@@ -16,8 +16,9 @@ var httpPort = args.Contains("--http-port")
 //     ? Int32.Parse(args[Array.IndexOf(args, "--actor-port") + 1])
 //     : 0;
 
-K8sClusterInfoProvider k8sClusterInfo = new K8sClusterInfoProvider(serviceName: "ticketburst-reservation", namespaceName: "default");
-
+IClusterInfoProvider clusterInfoProvider = isAwsEnvironment
+    ? new K8sClusterInfoProvider(serviceName: "ticketburst-reservation", namespaceName: "default")
+    : new DevboxClusterInfoProvider();
 ISecretsManagerPlugin secretsManager = isAwsEnvironment
     ? new AwsSecretsManagerPlugin()
     : new DevboxSecretsManagerPlugin(); 
@@ -43,7 +44,7 @@ var httpEndpoint = ServiceBootstrap.CreateHttpEndpoint(
         builder.Services.AddSingleton<IActorEngine>(new EventAreaManagerInProcessCache(entityRepo));
         //builder.Services.AddSingleton<IActorEngine, ProtoActorEngine>(provider => new ProtoActorEngine(provider, actorPort));
         builder.Services.AddSingleton<ReservationExpiryJob>();
-        builder.Services.AddSingleton<IClusterInfoProvider>(k8sClusterInfo);
+        builder.Services.AddSingleton<IClusterInfoProvider>(clusterInfoProvider);
     });
 
 var services = httpEndpoint.Services;
