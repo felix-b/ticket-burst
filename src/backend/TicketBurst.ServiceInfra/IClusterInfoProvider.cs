@@ -4,7 +4,6 @@ namespace TicketBurst.ServiceInfra;
 
 public interface IClusterInfoProvider
 {
-    string GetMemberUrl(int memberIndex);
     ClusterInfo Current { get; }
     event Action Changed;
 }
@@ -20,4 +19,10 @@ public record ClusterInfo(
         MemberHostNames: ImmutableList<string>.Empty,
         ThisMemberIndex: -1,
         Generation: 0);
+
+    public static readonly ClusterInfo DevBox = new ClusterInfo(
+        MemberCount: 1,
+        MemberHostNames: ImmutableList<string>.Empty.Add(Environment.MachineName),
+        ThisMemberIndex: 0,
+        Generation: 1);
 }

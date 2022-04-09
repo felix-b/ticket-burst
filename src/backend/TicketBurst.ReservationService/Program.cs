@@ -16,7 +16,7 @@ var httpPort = args.Contains("--http-port")
 //     ? Int32.Parse(args[Array.IndexOf(args, "--actor-port") + 1])
 //     : 0;
 
-K8sClusterInfoProvider k8sClusterInfo = new K8sClusterInfoProvider("ticketburst-reservation-deployment", "default");
+K8sClusterInfoProvider k8sClusterInfo = new K8sClusterInfoProvider(serviceName: "ticketburst-reservation", namespaceName: "default");
 
 ISecretsManagerPlugin secretsManager = isAwsEnvironment
     ? new AwsSecretsManagerPlugin()
