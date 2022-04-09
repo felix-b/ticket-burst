@@ -28,29 +28,35 @@ public class K8sClusterInfoProvider : IClusterInfoProvider
                 namespaceParameter: _namespaceName,
                 labelSelector: $"appsvc={_serviceName}");
             
-            if (statefulSetList == null || statefulSetList.Items.Count != 1)
+            Console.WriteLine($"K8sClusterInfoProvider: ListNamespacedStatefulSet returned {statefulSetList.Items.Count} items");
+
+            foreach (var statefulSet in statefulSetList.Items)
             {
-                throw new Exception("None or multiple matches for service name");
+                Console.WriteLine("---item---");
+                Console.WriteLine($"statefulSet.Spec.Replicas={statefulSet.Spec.Replicas}");
+                Console.WriteLine($"statefulSet.Metadata.ClusterName={statefulSet.Metadata.ClusterName}");
+                Console.WriteLine($"statefulSet.Metadata.Name={statefulSet.Metadata.Name}");
+                Console.WriteLine($"statefulSet.Metadata.Generation={statefulSet.Metadata.Generation}");
+                Console.WriteLine($"statefulSet.Status.ObservedGeneration={statefulSet.Status.ObservedGeneration}");
+                Console.WriteLine($"statefulSet.Status.Replicas={statefulSet.Status.Replicas}");
+                Console.WriteLine($"statefulSet.Status.CurrentRevision={statefulSet.Status.CurrentRevision}");
+                Console.WriteLine($"statefulSet.Status.CurrentReplicas{statefulSet.Status.CurrentReplicas}");
+                Console.WriteLine($"statefulSet.Status.AvailableReplicas={statefulSet.Status.AvailableReplicas}");
             }
 
-            var statefulSet = statefulSetList.Items[0];
-            
-            Console.WriteLine($"statefulSet.Spec.Replicas={statefulSet.Spec.Replicas}");
-            Console.WriteLine($"statefulSet.Metadata.ClusterName={statefulSet.Metadata.ClusterName}");
-            Console.WriteLine($"statefulSet.Metadata.Name={statefulSet.Metadata.Name}");
-            Console.WriteLine($"statefulSet.Metadata.Generation={statefulSet.Metadata.Generation}");
-            Console.WriteLine($"statefulSet.Status.ObservedGeneration={statefulSet.Status.ObservedGeneration}");
-            Console.WriteLine($"statefulSet.Status.Replicas={statefulSet.Status.Replicas}");
-            Console.WriteLine($"statefulSet.Status.CurrentRevision={statefulSet.Status.CurrentRevision}");
-            Console.WriteLine($"statefulSet.Status.CurrentReplicas{statefulSet.Status.CurrentReplicas}");
-            Console.WriteLine($"statefulSet.Status.AvailableReplicas={statefulSet.Status.AvailableReplicas}");
-            
-            Current = new ClusterInfo(
-                MemberCount: statefulSet.Spec.Replicas.GetValueOrDefault(-1),
-                ThisMemberIndex: -1,
-                MemberHostNames: Enumerable.Range(0, statefulSet.Spec.Replicas.GetValueOrDefault(-1)).Select(i => $"{_serviceName}-{i}").ToImmutableList(),
-                Generation: -1
-            );
+            if (statefulSetList.Items.Count > 0)
+            {
+                var statefulSet = statefulSetList.Items[0];
+                var memberCount = statefulSet.Spec.Replicas.GetValueOrDefault(-1); 
+                Current = new ClusterInfo(
+                    MemberCount: memberCount,
+                    ThisMemberIndex: -1,
+                    MemberHostNames: Enumerable.Range(0, memberCount)
+                        .Select(i => $"{_serviceName}-{i}")
+                        .ToImmutableList(),
+                    Generation: statefulSet.Metadata.Generation.GetValueOrDefault(-1)
+                );
+            }
 
             Console.WriteLine("K8sClusterInfoProvider: initializing 3");
         }
@@ -60,7 +66,7 @@ public class K8sClusterInfoProvider : IClusterInfoProvider
         }
     }
 
-    public ClusterInfo Current { get; }
+    public ClusterInfo Current { get; } = ClusterInfo.Empty;
     
     public event Action? Changed;
 
