@@ -24,18 +24,19 @@ spec:
   selector:
     matchLabels:
       appsvc: ticketburst-reservation
-  replicas: 1
+  replicas: 3
   template:
     metadata:
       labels:
         app: ticketburst
         appsvc: ticketburst-reservation
     spec:
+      serviceAccountName: default
       nodeSelector:
         appsvc: ticketburst-reservation
       containers:
       - name: ticketburst-services-reservation
-        image: 381777116710.dkr.ecr.eu-south-1.amazonaws.com/ticketburst-reservation:9e85aaa
+        image: 381777116710.dkr.ecr.eu-south-1.amazonaws.com/ticketburst-reservation:98871ef
         ports:
         - containerPort: 80
         command: ["/app/reservationd"]
@@ -59,4 +60,31 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.serviceAccountName          
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata: 
+  name: reservation-cluster
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - get
+      - list
+      - watch
+      - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata: 
+  name: reservation-cluster
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: reservation-cluster
+subjects:
+  - kind: ServiceAccount
+    name: default
 ---
