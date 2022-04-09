@@ -24,13 +24,33 @@ public class K8sClusterInfoProvider : IClusterInfoProvider
             Console.WriteLine("K8sClusterInfoProvider: initializing 1");
             Console.WriteLine($"K8sClusterInfoProvider: this pod name [{Environment.MachineName}]");
 
-            var list = _client.ListNamespacedPod(namespaceParameter: _namespaceName, labelSelector: $"appsvc={_serviceName}");
-            if (list == null)
+            var statefulSetList = _client.ListNamespacedStatefulSet(
+                namespaceParameter: _namespaceName,
+                labelSelector: $"appsvc={_serviceName}");
+            
+            if (statefulSetList == null || statefulSetList.Items.Count != 1)
             {
-                throw new Exception("ListNamespacedPod returned null!");
+                throw new Exception("None or multiple matches for service name");
             }
 
-            Current = CreateInfo(list);
+            var statefulSet = statefulSetList.Items[0];
+            
+            Console.WriteLine($"statefulSet.Spec.Replicas={statefulSet.Spec.Replicas}");
+            Console.WriteLine($"statefulSet.Metadata.ClusterName={statefulSet.Metadata.ClusterName}");
+            Console.WriteLine($"statefulSet.Metadata.Name={statefulSet.Metadata.Name}");
+            Console.WriteLine($"statefulSet.Metadata.Generation={statefulSet.Metadata.Generation}");
+            Console.WriteLine($"statefulSet.Status.ObservedGeneration={statefulSet.Status.ObservedGeneration}");
+            Console.WriteLine($"statefulSet.Status.Replicas={statefulSet.Status.Replicas}");
+            Console.WriteLine($"statefulSet.Status.CurrentRevision={statefulSet.Status.CurrentRevision}");
+            Console.WriteLine($"statefulSet.Status.CurrentReplicas{statefulSet.Status.CurrentReplicas}");
+            Console.WriteLine($"statefulSet.Status.AvailableReplicas={statefulSet.Status.AvailableReplicas}");
+            
+            Current = new ClusterInfo(
+                MemberCount: statefulSet.Spec.Replicas.GetValueOrDefault(-1),
+                ThisMemberIndex: -1,
+                MemberHostNames: Enumerable.Range(0, statefulSet.Spec.Replicas.GetValueOrDefault(-1)).Select(i => $"{_serviceName}-{i}").ToImmutableList(),
+                Generation: -1
+            );
 
             Console.WriteLine("K8sClusterInfoProvider: initializing 3");
         }
@@ -47,8 +67,9 @@ public class K8sClusterInfoProvider : IClusterInfoProvider
     private ClusterInfo CreateInfo(V1PodList pods)
     {
         var thisPodName = Environment.MachineName;
+        var podsAlive = pods.Items.Where(IsPodAlive).ToList();
 
-        var thisPod = pods.Items.FirstOrDefault(p => p.Metadata.Name == thisPodName);
+        var thisPod = podsAlive.FirstOrDefault(p => p.Metadata.Name == thisPodName);
         if (thisPod == null)
         {
             Console.WriteLine("Could not find my own pod!!");
@@ -56,12 +77,20 @@ public class K8sClusterInfoProvider : IClusterInfoProvider
         }
 
         return new ClusterInfo(
-            MemberCount: pods.Items.Count,
-            ThisMemberIndex: pods.Items.IndexOf(thisPod),
+            MemberCount: podsAlive.Count,
+            ThisMemberIndex: podsAlive.IndexOf(thisPod),
             Generation: thisPod.Metadata.Generation.GetValueOrDefault(-1),
-            MemberHostNames: pods.Items.Select(p => $"{p.Metadata.Name}.{_namespaceName}").ToImmutableList()
+            MemberHostNames: podsAlive.Select(p => $"{p.Metadata.Name}.{_namespaceName}").ToImmutableList()
         );
     }
 
     public static bool IsK8sEnvironment() => KubernetesClientConfiguration.IsInCluster();
+
+    private static bool IsPodAlive(V1Pod pod)
+    {
+        return (
+            pod.Status.Phase == "Running" && 
+            pod.Status.PodIP is not null &&
+            pod.Status.ContainerStatuses.All(s => s.Ready));
+    }
 }
