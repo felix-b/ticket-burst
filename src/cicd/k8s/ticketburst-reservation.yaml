@@ -17,14 +17,15 @@ spec:
     protocol: TCP
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
-  name: ticketburst-reservation-deployment
+  name: ticketburst-reservation-statefulset
 spec:
+  serviceName: ticketburst-reservation-service
   selector:
     matchLabels:
       appsvc: ticketburst-reservation
-  replicas: 3
+  replicas: 2
   template:
     metadata:
       labels:
@@ -36,7 +37,7 @@ spec:
         appsvc: ticketburst-reservation
       containers:
       - name: ticketburst-services-reservation
-        image: 381777116710.dkr.ecr.eu-south-1.amazonaws.com/ticketburst-reservation:98871ef
+        image: 381777116710.dkr.ecr.eu-south-1.amazonaws.com/ticketburst-reservation:93894ef
         ports:
         - containerPort: 80
         command: ["/app/reservationd"]
@@ -70,6 +71,9 @@ rules:
       - ""
     resources:
       - pods
+      - statefulsets
+      - statefulsets/scale
+      - statefulsets/status
     verbs:
       - get
       - list
@@ -87,4 +91,36 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: default
+    namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata: 
+  name: reservation-statefulsets-cluster
+rules:
+  - apiGroups:
+      - "apps"
+    resources:
+      - pods
+      - statefulsets
+      - statefulsets/scale
+      - statefulsets/status
+    verbs:
+      - get
+      - list
+      - watch
+      - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata: 
+  name: reservation-statefulsets-cluster
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: reservation-statefulsets-cluster
+subjects:
+  - kind: ServiceAccount
+    name: default
+    namespace: default
 ---
