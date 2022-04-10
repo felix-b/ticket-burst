@@ -54,6 +54,11 @@ public class K8sClusterInfoProvider : IClusterInfoProvider
     }
 
     public DateTime UtcNow => DateTime.UtcNow;
+    
+    public string GetEndpointUrl(string memberHostName, int memberIndex)
+    {
+        return $"http://{memberHostName}";
+    }
 
     private void PrintStatefulSet(V1StatefulSet statefulSet)
     {

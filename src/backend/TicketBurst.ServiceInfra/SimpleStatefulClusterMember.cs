@@ -151,11 +151,9 @@ public class SimpleStatefulClusterMember : IDisposable
         }
     }
 
-    public async Task RouteMessageAsync(
-        string key, 
-        Action handleHere, 
-        Action<uint> relayToMember, 
-        TimeSpan awaitSteadyTimeout, 
+    public async Task<(MessageRoutingAction action, uint? memberIndex)> TriageMessageRoutingAsync(
+        string key,
+        TimeSpan awaitSteadyTimeout,
         CancellationToken cancellation)
     {
         var state = CurrentState;
@@ -169,11 +167,11 @@ public class SimpleStatefulClusterMember : IDisposable
         {
             if (currentKeyMemberIndex == state.ThisMemberIndex)
             {
-                handleHere();
+                return (MessageRoutingAction.HandleInProc, null);
             }
             else
             {
-                relayToMember(currentKeyMemberIndex);
+                return (MessageRoutingAction.RelayToMember, currentKeyMemberIndex);
             }
         }
         else
@@ -185,16 +183,38 @@ public class SimpleStatefulClusterMember : IDisposable
             
             if (newKeyMemberIndex == state.ThisMemberIndex)
             {
-                handleHere();
+                return (MessageRoutingAction.HandleInProc, null);
             }
             else
             {
-                relayToMember(newKeyMemberIndex);
+                return (MessageRoutingAction.RelayToMember, newKeyMemberIndex);
             }
+        }
+    }
+    
+    public async Task RouteMessageAsync(
+        string key, 
+        Action handleHere, 
+        Action<uint> relayToMember, 
+        TimeSpan awaitSteadyTimeout, 
+        CancellationToken cancellation)
+    {
+        var (action, memberIndex) = await TriageMessageRoutingAsync(key, awaitSteadyTimeout, cancellation);
+
+        switch (action)
+        {
+            case MessageRoutingAction.HandleInProc:
+                handleHere();
+                break;
+            case MessageRoutingAction.RelayToMember:
+                relayToMember(memberIndex!.Value);
+                break;
         }
     }
 
     public SimpleStatefulClusterState CurrentState { get; private set; }
+
+    public IClusterInfoProvider InfoProvider => _infoProvider;
     
     public event Action? Changed;
 
@@ -250,3 +270,10 @@ public class SimpleStatefulClusterMember : IDisposable
         );
     }
 }
+
+public enum MessageRoutingAction
+{
+    HandleInProc, 
+    RelayToMember
+}
+

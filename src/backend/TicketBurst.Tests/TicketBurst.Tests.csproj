@@ -24,6 +24,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\TicketBurst.CheckoutService\TicketBurst.CheckoutService.csproj" />
+      <ProjectReference Include="..\TicketBurst.Contracts.Proto\TicketBurst.Contracts.Proto.csproj" />
       <ProjectReference Include="..\TicketBurst.Contracts\TicketBurst.Contracts.csproj" />
       <ProjectReference Include="..\TicketBurst.ServiceInfra\TicketBurst.ServiceInfra.csproj" />
     </ItemGroup>

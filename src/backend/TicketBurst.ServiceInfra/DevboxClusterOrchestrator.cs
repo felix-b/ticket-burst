@@ -15,18 +15,16 @@ public class DevboxClusterOrchestrator : IAsyncDisposable
         Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)!,
         $"devbox-members.txt");
     
-    private readonly int _startPortNumber;
     private readonly Channel<Action> _requestQueue = Channel.CreateBounded<Action>(capacity: 100);
     private readonly CancellationTokenSource _loopCancellation = new CancellationTokenSource();
     private readonly DevboxClusterInfoProvider _infoProvider;
     private ImmutableDictionary<int, Process> _processByMemberIndex;
     private readonly Task _controlLoopTask;
 
-    public DevboxClusterOrchestrator(int startPortNumber, DevboxClusterInfoProvider infoProvider)
+    public DevboxClusterOrchestrator(DevboxClusterInfoProvider infoProvider)
     {
-        Console.WriteLine($"DevboxClusterOrchestrator> starting port [{startPortNumber}], executable=[{__executablePath}]");
+        Console.WriteLine($"DevboxClusterOrchestrator> starting, executable=[{__executablePath}]");
         
-        _startPortNumber = startPortNumber;
         _infoProvider = infoProvider;
         _processByMemberIndex = ImmutableDictionary<int, Process>.Empty.Add(0, Process.GetCurrentProcess());
         _controlLoopTask = RunControlLoop();
@@ -79,7 +77,7 @@ public class DevboxClusterOrchestrator : IAsyncDisposable
         void ScaleOutOne()
         {
             var newMemberIndex = _processByMemberIndex.Count;
-            var newProcess = SpawnNewProcess(newMemberIndex);
+            var newProcess = SpawnNewProcess(newMemberIndex, memberCount: newMemberIndex + 1);
 
             _processByMemberIndex = _processByMemberIndex.Add(newMemberIndex, newProcess);
             NotifyChange();
@@ -104,14 +102,13 @@ public class DevboxClusterOrchestrator : IAsyncDisposable
             }
         }
 
-        Process SpawnNewProcess(int memberIndex)
+        Process SpawnNewProcess(int memberIndex, int memberCount)
         {
-            var httpPort = 3010 + memberIndex;
-            var actorPort = _startPortNumber + memberIndex;
+            var portNumber = GetMemberPortNumber(memberIndex);
             
             var psi = new ProcessStartInfo(
                 fileName: __executablePath, 
-                arguments: $"--mock-db --http-port {httpPort} --actor-port {actorPort} --member-index {memberIndex}");
+                arguments: $"--mock-db --listen-port {portNumber} --member-index {memberIndex} --member-count {memberCount}");
             
             psi.UseShellExecute = true;
             var process = Process.Start(psi);
@@ -149,9 +146,18 @@ public class DevboxClusterOrchestrator : IAsyncDisposable
         }
 
         int[] GetPortNumberArray() => _processByMemberIndex.Keys
-            .Select(key => _startPortNumber + key)
+            .Select(index => GetMemberPortNumber(index))
             .ToArray();
+
     }
 
     public static string MemberListFilePath => __memberListFilePath;
+
+    public static int GetMemberPortNumber(int index) => index == 0
+        ? 3002
+        : 3010 + index;
+    
+    public static int GetMemberIndexFromPortNumber(int portNumber) => portNumber == 3002
+        ? 0
+        : portNumber - 3010;
 }

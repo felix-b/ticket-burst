@@ -82,6 +82,27 @@ public class EventAreaManagerInProcessCache : IActorEngine
         }
     }
 
+    public void Scavenge(Func<string, string, bool> retentionPredicate)
+    {
+        var snapshot = _loadPromiseByEventAreaKey.Keys.ToArray();
+
+        foreach (var key in snapshot)
+        {
+            var keyParts = key.Split('/', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+            
+            if (keyParts.Length == 2)
+            {
+                var eventId = keyParts[0];
+                var areaId = keyParts[1];
+                if (!retentionPredicate(eventId, areaId))
+                {
+                    _loadPromiseByEventAreaKey.Remove(key, out _);
+                    Console.WriteLine($"EventAreaManagerInProcessCache.SCAVENGE> removed actor [{key}]");
+                }
+            }
+        }
+    }
+
     public string[] GetLocalActorIds()
     {
         return _loadPromiseByEventAreaKey.Keys.ToArray();

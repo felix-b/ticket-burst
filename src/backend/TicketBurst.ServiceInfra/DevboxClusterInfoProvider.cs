@@ -10,16 +10,25 @@ public class DevboxClusterInfoProvider : IClusterInfoProvider
     private ClusterInfo _info;
     private System.Threading.Timer? _timer = null;
     
-    public DevboxClusterInfoProvider(int thisPortNumber)
+    // public DevboxClusterInfoProvider(int thisPortNumber)
+    // {
+    //     _thisPortNumber = thisPortNumber;
+    //     _info = MakeClusterInfo(new[] { thisPortNumber }, thisPortNumber, generation: 1);
+    // }
+
+    public DevboxClusterInfoProvider(int memberIndex, int memberCount)
     {
-        _thisPortNumber = thisPortNumber;
-        _info = MakeClusterInfo(new[] { thisPortNumber }, thisPortNumber, generation: 1);
+        var allPortNumbers = Enumerable
+            .Range(0, memberCount)
+            .Select(DevboxClusterOrchestrator.GetMemberPortNumber)
+            .ToArray();
+        _thisPortNumber = allPortNumbers[memberIndex];
+        _info = MakeClusterInfo(allPortNumbers, _thisPortNumber, generation: 1);
     }
 
-    public DevboxClusterInfoProvider(int[] portNumbers, int thisPortNumber)
+    public string GetEndpointUrl(string memberHostName, int memberIndex)
     {
-        _thisPortNumber = thisPortNumber;
-        _info = MakeClusterInfo(portNumbers, thisPortNumber, generation: 1);
+        return $"http://{memberHostName}";
     }
 
     public void InjectChange(int[] portNumbers)
@@ -59,11 +68,15 @@ public class DevboxClusterInfoProvider : IClusterInfoProvider
 
     private static ClusterInfo MakeClusterInfo(int[] portNumbers, int thisPortNumber, long generation)
     {
-        return new ClusterInfo(
+        var thisMemberIndex = DevboxClusterOrchestrator.GetMemberIndexFromPortNumber(thisPortNumber);
+        var info = new ClusterInfo(
             MemberCount: portNumbers.Length,
-            ThisMemberIndex: Array.IndexOf(portNumbers, thisPortNumber),
+            ThisMemberIndex: thisMemberIndex,
             Generation: generation,
             MemberHostNames: portNumbers.Select(p => $"localhost:{p}").ToImmutableList()
         );
+        Console.WriteLine($"DevboxClusterInfoProvider.MakeClusterInfo");
+        Console.WriteLine($"> memberCount[{info.MemberCount}] thisMemberIndex[{info.ThisMemberIndex}] generation=[{info.Generation}] hosts=[{string.Join(' ', info.MemberHostNames)}]");
+        return info;
     }
 }

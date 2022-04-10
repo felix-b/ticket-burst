@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using TicketBurst.ReservationService.Integrations;
-using TicketBurst.ReservationService.Integrations.ProtoActor;
 using TicketBurst.ServiceInfra;
 
 namespace TicketBurst.ReservationService.Controllers;

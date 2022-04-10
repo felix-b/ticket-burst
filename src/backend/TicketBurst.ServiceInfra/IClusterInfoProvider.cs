@@ -9,6 +9,8 @@ public interface IClusterInfoProvider : IDisposable
     
     DateTime UtcNow { get; }
 
+    string GetEndpointUrl(string memberHostName, int memberIndex); 
+
     public ClusterInfo GetInfoOrThrow()
     {
         return TryGetInfo() ?? throw new Exception($"{this.GetType().Name} did not retrieve cluster info");

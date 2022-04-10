@@ -1,19 +1,24 @@
 ﻿syntax = "proto3";
 package TicketBurst.Reservation;
-option csharp_namespace = "TicketBurst.Reservation.ProtoActor";
+option csharp_namespace = "TicketBurst.Reservation.Integrations.SimpleSharding";
 
 import "google/protobuf/timestamp.proto";
 
+message ActorKey {
+  string EventId = 1;
+  string AreaId = 2;
+}
+
 message PingRequest {
+  ActorKey Key = 1;
 }
 
 message PingResponse {
 }
 
 message TryReserveSeatsRequest {
-  string EventId = 1;
-  string AreaId = 2;
-  repeated string SeatIds = 3;
+  ActorKey Key = 1;
+  repeated string SeatIds = 2;
 }
 message TryReserveSeatsResponse {
   TryReserveSeatsRequest Request = 1;
@@ -24,7 +29,8 @@ message TryReserveSeatsResponse {
 }
 
 message FindEffectiveJournalRecordByIdRequest {
-  string ReservationId = 1;
+  ActorKey Key = 1;
+  string ReservationId = 2;
 }
 message FindEffectiveJournalRecordByIdResponse {
   optional ReservationJournalRecordMessage Record = 1;
@@ -43,15 +49,17 @@ message ReservationJournalRecordMessage {
 }
 
 message UpdateReservationPerOrderStatusRequest {
-  string ReservationId = 1;
-  uint32 OrderNumber = 2;
-  int32 OrderStatus = 3;
+  ActorKey Key = 1;
+  string ReservationId = 2;
+  uint32 OrderNumber = 3;
+  int32 OrderStatus = 4;
 }
 message UpdateReservationPerOrderStatusResponse {
   bool Updated = 1;
 }
 
 message GetUpdateNotificationRequest {
+  ActorKey Key = 1;
 }
 message GetUpdateNotificationResponse {
   EventAreaUpdateNotificationMessage Notification = 1;
@@ -68,11 +76,12 @@ message EventAreaUpdateNotificationMessage {
 }
 
 message ReleaseExpiredReservationsRequest {
+  ActorKey Key = 1;
 }
 message ReleaseExpiredReservationsResponse {
 }
 
-service EventAreaManagerGrain {
+service EventAreaManagerShard {
   rpc Ping(PingRequest) returns (PingResponse) {}
   rpc TryReserveSeats(TryReserveSeatsRequest) returns (TryReserveSeatsResponse) {}
   rpc FindEffectiveJournalRecordById(FindEffectiveJournalRecordByIdRequest) returns (FindEffectiveJournalRecordByIdResponse) {}

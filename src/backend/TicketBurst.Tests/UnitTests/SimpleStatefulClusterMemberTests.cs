@@ -526,6 +526,11 @@ public class SimpleStatefulClusterMemberTests
         {
         }
 
+        public string GetEndpointUrl(string memberHostName, int memberIndex)
+        {
+            throw new NotImplementedException();
+        }
+        
         ClusterInfo? IClusterInfoProvider.TryGetInfo() => Info;
         
         public DateTime UtcNow { get; set; } = DateTime.UtcNow;

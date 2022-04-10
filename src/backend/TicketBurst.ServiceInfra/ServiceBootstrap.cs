@@ -1,8 +1,10 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.Net;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http.Json;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Net.Http.Headers;
 using Microsoft.OpenApi.Models;
@@ -17,10 +19,10 @@ public static class ServiceBootstrap
         int listenPortNumber,
         string[] commandLineArgs, 
         Action<WebApplicationBuilder>? configure = null,
+        Action<IEndpointRouteBuilder>? mapRoutes = null,
         IDataProtectionProvider? dataProtectionProvider = null)
     {
         var builder = WebApplication.CreateBuilder(commandLineArgs);
-
         builder.WebHost.UseUrls($"http://*:{listenPortNumber}");
 
         // Add services to the container.
@@ -64,11 +66,18 @@ public static class ServiceBootstrap
 
         app.UseCors("the_cors_policy");
         
+        
         // Configure the HTTP request pipeline.
         app.UseSwagger();
         app.UseSwaggerUI();
 
-        app.MapControllers();
+        //app.MapControllers();
+        app.UseRouting();
+        app.UseEndpoints(endpoints => {
+            endpoints.MapControllers();
+            mapRoutes?.Invoke(endpoints); 
+        });
+        
         return app;
     }
 }

@@ -1,9 +1,6 @@
-﻿
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using Google.Protobuf.WellKnownTypes;
-using Microsoft.AspNetCore.Localization;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
-using TicketBurst.Reservation.ProtoActor;
+using TicketBurst.Reservation.Integrations.SimpleSharding;
 
 namespace TicketBurst.Contracts.Proto;
 
@@ -12,8 +9,10 @@ public static class ContractExtensions
     public static TryReserveSeatsRequest ToProto(this SeatReservationRequestContract source)
     {
         var result = new TryReserveSeatsRequest() {
-            EventId = source.EventId,
-            AreaId = source.HallAreaId
+            Key = new ActorKey {
+                EventId = source.EventId,
+                AreaId = source.HallAreaId
+            }
         };
         result.SeatIds.AddRange(source.SeatIds);
         return result;
@@ -22,9 +21,9 @@ public static class ContractExtensions
     public static SeatReservationRequestContract FromProto(this TryReserveSeatsRequest source)
     {
         return new SeatReservationRequestContract(
-            source.EventId,
-            source.AreaId,
-            source.SeatIds.ToArray(),
+            eventId:  source.Key.EventId,
+            hallAreaId: source.Key.AreaId,
+            seatIds: source.SeatIds.ToArray(),
             clientContext: null
         );
     }

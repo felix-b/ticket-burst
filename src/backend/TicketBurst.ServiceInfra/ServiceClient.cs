@@ -26,10 +26,11 @@ public static class ServiceClient
     public static async Task<T?> HttpGetJson<T>(
         ServiceName serviceName, 
         string[]? path = null, 
-        Tuple<string, string>[]? query = null)
+        Tuple<string, string>[]? query = null,
+        string? hostOverride = null)
         where T : class
     {
-        var url = GetRequestUrl(serviceName, path, query);
+        var url = GetRequestUrl(serviceName, path, query, hostOverride: hostOverride);
         Console.WriteLine("HTTP GET: " + url);
 
         try
@@ -52,10 +53,11 @@ public static class ServiceClient
         ServiceName serviceName, 
         string[]? path = null, 
         Tuple<string, string>[]? query = null, 
-        object? body = null)
+        object? body = null,
+        string? hostOverride = null)
         where T : class
     {
-        var url = GetRequestUrl(serviceName, path, query);
+        var url = GetRequestUrl(serviceName, path, query, hostOverride: hostOverride);
         Console.WriteLine("HTTP POST: " + url);
 
         try
@@ -118,10 +120,11 @@ public static class ServiceClient
     private static string GetRequestUrl(
         ServiceName serviceName, 
         string[]? path = null, 
-        Tuple<string, string>[]? query = null)
+        Tuple<string, string>[]? query = null,
+        string? hostOverride = null)
     {
         var builder = new StringBuilder();
-        builder.Append(__hostByServiceName[serviceName]);
+        builder.Append(hostOverride ?? __hostByServiceName[serviceName]);
 
         if (path != null)
         {
