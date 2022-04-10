@@ -11,15 +11,15 @@ public class K8sClusterInfoProvider : IClusterInfoProvider
 {
     private readonly string _machineName;
     private readonly int _replicaIndex;
-    private readonly string _serviceName;
+    private readonly string _serviceBaseName;
     private readonly string _statefulSetName;
     private readonly string _namespaceName;
     private readonly IKubernetes _client;
 
-    public K8sClusterInfoProvider(string serviceName, string namespaceName)
+    public K8sClusterInfoProvider(string serviceBaseName, string namespaceName)
     {
-        _serviceName = serviceName;
-        _statefulSetName = $"{_serviceName}-statefulset";
+        _serviceBaseName = serviceBaseName;
+        _statefulSetName = $"{_serviceBaseName}-statefulset";
         _namespaceName = namespaceName;
         _machineName = Environment.MachineName;
         
@@ -57,7 +57,8 @@ public class K8sClusterInfoProvider : IClusterInfoProvider
     
     public string GetEndpointUrl(string memberHostName, int memberIndex)
     {
-        return $"http://{memberHostName}.{_namespaceName}";
+        //ticketburst-reservation-statefulset-0.ticketburst-reservation-service.default.svc.cluster.local
+        return $"http://{memberHostName}.{_serviceBaseName}-service.{_namespaceName}.svc.cluster.local";
     }
 
     private void PrintStatefulSet(V1StatefulSet statefulSet)

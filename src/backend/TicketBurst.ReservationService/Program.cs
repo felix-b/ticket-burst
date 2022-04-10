@@ -21,7 +21,7 @@ var memberCount = args.Contains("--member-count")
     : 1;
 
 using IClusterInfoProvider clusterInfoProvider = isAwsEnvironment
-    ? new K8sClusterInfoProvider(serviceName: "ticketburst-reservation", namespaceName: "default")
+    ? new K8sClusterInfoProvider(serviceBaseName: "ticketburst-reservation", namespaceName: "default")
     : new DevboxClusterInfoProvider(memberIndex, memberCount);
 
 var devboxInfo = clusterInfoProvider as DevboxClusterInfoProvider;
