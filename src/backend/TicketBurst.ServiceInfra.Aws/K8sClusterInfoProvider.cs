@@ -57,7 +57,7 @@ public class K8sClusterInfoProvider : IClusterInfoProvider
     
     public string GetEndpointUrl(string memberHostName, int memberIndex)
     {
-        return $"http://{memberHostName}";
+        return $"http://{memberHostName}.{_namespaceName}";
     }
 
     private void PrintStatefulSet(V1StatefulSet statefulSet)
