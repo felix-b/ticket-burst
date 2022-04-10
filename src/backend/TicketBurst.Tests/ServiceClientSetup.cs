@@ -12,19 +12,19 @@ public static class ServiceClientSetup
         ServiceClient.UseHosts(new Dictionary<ServiceName, string> {
             {
                 ServiceName.Search, 
-                OperatingSystem.IsWindows() 
+                false//OperatingSystem.IsWindows() 
                     ? "http://localhost:3001" 
                     : awsApiGatewayUrl
             },
             { 
                 ServiceName.Reservation, 
-                OperatingSystem.IsWindows() 
+                false//OperatingSystem.IsWindows() 
                     ? "http://localhost:3002" 
                     : awsApiGatewayUrl 
             },
             {
                 ServiceName.Checkout, 
-                OperatingSystem.IsWindows() 
+                false//OperatingSystem.IsWindows() 
                     ? "http://localhost:3003" 
                     : awsApiGatewayUrl
             },
