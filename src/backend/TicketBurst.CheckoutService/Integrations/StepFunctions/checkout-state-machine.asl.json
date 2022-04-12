@@ -9,6 +9,10 @@
         "ApiEndpoint": "3cnuf521pd.execute-api.eu-south-1.amazonaws.com",
         "Method": "POST",
         "Path": "/workflow/begin",
+        "Headers": {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },        
         "RequestBody": {
           "orderNumber.$": "$.order.orderNumber",
           "taskToken.$": "$$.Task.Token"
@@ -25,6 +29,10 @@
         "ApiEndpoint": "3cnuf521pd.execute-api.eu-south-1.amazonaws.com",
         "Method": "POST",
         "Path": "/order/update-status",
+        "Headers": {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
         "RequestBody": {
           "orderNumber.$": "$.order.orderNumber",
           "orderStatus.$": "$.paymentResult.orderStatus",
@@ -42,6 +50,10 @@
         "ApiEndpoint": "3cnuf521pd.execute-api.eu-south-1.amazonaws.com",
         "Method": "POST",
         "Path": "/reporting/add-order",
+        "Headers": {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
         "RequestBody": {
           "order.$": "$.order"
         },
@@ -56,6 +68,10 @@
         "ApiEndpoint": "3cnuf521pd.execute-api.eu-south-1.amazonaws.com",
         "Method": "POST",
         "Path": "/shipment/ship-tickets",
+        "Headers": {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
         "RequestBody": {
           "orderNumber.$": "$.order.orderNumber"
         },
