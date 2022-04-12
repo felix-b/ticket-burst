@@ -26,10 +26,20 @@ public class MockSagaEnginePlugin : ISagaEnginePlugin
             _entryByOrderNumber.Add(order.OrderNumber, entry);
         }
 
+        var beginRequest = new BeginWorkflowRequest {
+            OrderNumber = order.OrderNumber,
+            StateName = "AwaitPayment",
+            TaskToken = Guid.NewGuid().ToString()
+        };
+        await ServiceClient.HttpPostJson<string>(
+            ServiceName.Checkout,
+            path: new[] { "workflow", "begin" },
+            body: beginRequest);
+
         await Task.Delay(TimeSpan.FromMilliseconds(100));
     }
 
-    public Task DispatchPaymentCompletionEvent(string paymentToken, uint orderNumber, OrderStatus orderStatus)
+    public Task DispatchPaymentCompletionEvent(string awaitStateToken, string paymentToken, uint orderNumber, OrderStatus orderStatus)
     {
         Console.WriteLine($"MockSagaEnginePlugin> PAYMENT-EVENT order[{orderNumber}]");
 
@@ -85,6 +95,12 @@ public class MockSagaEnginePlugin : ISagaEnginePlugin
                 path: new[] { "shipment", "ship-tickets" },
                 body: shipmentRequest);
 
+            var reportingRequest = new CheckoutWorkflowStateContract.OrderPart(order);
+            await ServiceClient.HttpPostJson<string>(
+                ServiceName.Checkout,
+                path: new[] { "reporting", "add-order" },
+                body: reportingRequest);
+            
             Console.WriteLine($"MockSagaEnginePlugin::Workflow[{order.OrderNumber}]> SHIPPING REQUEST SENT");
         }
 

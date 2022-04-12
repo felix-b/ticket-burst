@@ -27,7 +27,9 @@ IEmailGatewayPlugin emailGateway = isAwsEnvironment
     : UseDevboxEmailGateway();
 
 var mockPaymentGateway = new MockPaymentGatewayPlugin();
-var mockSagaEngine = new MockSagaEnginePlugin();
+var sagaEngine = isAwsEnvironment
+    ? UseAwsStepFunctionsSagaEngine()
+    : new MockSagaEnginePlugin();
 
 using var orderStatusUpdatePublisher = new InProcessMessagePublisher<OrderStatusUpdateNotificationContract>(
     receiverServiceName: ServiceName.Reservation,
@@ -42,7 +44,7 @@ var httpEndpoint = ServiceBootstrap.CreateHttpEndpoint(
     configure: builder => {
         builder.Services.AddSingleton<ICheckoutEntityRepository>(entityRepository);
         builder.Services.AddSingleton<IMessagePublisher<OrderStatusUpdateNotificationContract>>(orderStatusUpdatePublisher);
-        builder.Services.AddSingleton<ISagaEnginePlugin>(mockSagaEngine);
+        builder.Services.AddSingleton<ISagaEnginePlugin>(sagaEngine);
         builder.Services.AddSingleton<IStorageGatewayPlugin>(storageGateway);
         builder.Services.AddSingleton<IEmailGatewayPlugin>(emailGateway);
         builder.Services.AddSingleton<IPaymentGatewayPlugin>(mockPaymentGateway);
@@ -79,4 +81,11 @@ IEmailGatewayPlugin UseDevboxEmailGateway()
 {
     Console.WriteLine("Using DEVBOX email gateway.");
     return new DevboxEmailGatewayPlugin();
+}
+
+ISagaEnginePlugin UseAwsStepFunctionsSagaEngine()
+{
+    Console.WriteLine("Using AWS StepFunctions.");
+    var secret = secretsManager.GetEmailServiceSecret("ses-params").Result;
+    return new AwsStepFunctionsSagaEnginePlugin(secret);
 }

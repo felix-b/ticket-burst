@@ -81,6 +81,20 @@ public class MySqlCheckoutEntityRepository : ICheckoutEntityRepository
         }
     }
 
+    public async Task<IEnumerable<AggregatedSalesRecord>> GetRecentAggregatedSales(int count)
+    {
+        using (var context = _dbContextFactory.CreateDbContext())
+        {
+            var results = await context.AggregatedSales
+                .AsNoTracking()
+                .OrderByDescending(record => record.OrderDate).ThenByDescending(record => record.TicketCount)
+                .Take(count)
+                .ToArrayAsync();
+
+            return results;
+        }
+    }
+
     public async Task<OrderContract?> TryGetOrderByNumber(uint orderNumber)
     {
         using (var context = _dbContextFactory.CreateDbContext())
@@ -137,7 +151,68 @@ public class MySqlCheckoutEntityRepository : ICheckoutEntityRepository
             return order.ToImmutable();
         }
     }
-    
+
+    public async Task InsertWorkflowStateRecord(WorkflowStateRecord state)
+    {
+        using var context = _dbContextFactory.CreateDbContext();
+
+        context.WorkflowStates.Add(state);
+        await context.SaveChangesAsync();
+
+        Console.WriteLine(
+            $"MySqlCheckoutEntityRepository.InsertWorkflowStateRecord> order [{state.OrderNumber}] state [{state.AwaitStateName}] troken [{state.AwaitStateToken}]");
+    }
+
+    public async Task<WorkflowStateRecord?> TryGetWorkflowStateRecord(uint orderNumber)
+    {
+        using var context = _dbContextFactory.CreateDbContext();
+
+        var result = await context.WorkflowStates.FirstOrDefaultAsync(x => x.OrderNumber == orderNumber);
+
+        Console.WriteLine(
+            $"MySqlCheckoutEntityRepository.TryGetWorkflowStateRecord> order [{orderNumber}] -> {(result != null ? result.AwaitStateToken : "NOT FOUND!")}");
+
+        return result;
+    }
+
+    public async Task DeleteWorkflowStateRecord(uint orderNumber)
+    {
+        using var context = _dbContextFactory.CreateDbContext();
+
+        var result = await context.Database.ExecuteSqlInterpolatedAsync($"DELETE FROM workflow_states WHERE OrderNumber={orderNumber}");
+
+        Console.WriteLine(
+            $"MySqlCheckoutEntityRepository.DeleteWorkflowStateRecord> {result} rows affected");
+    }
+
+    public async Task UpsertAggregatedSalesRecord(AggregatedSalesRecord record)
+    {
+        using var context = _dbContextFactory.CreateDbContext();
+
+        var orderDate = record.OrderDate.Date;   
+        var eventDate = record.EventDate.Date;   
+        var venueId = record.VenueId;   
+        var eventId = record.EventId;   
+        var areaId = record.AreaId;   
+        var priceLevelId = record.PriceLevelId;
+        var ticketCount = record.TicketCount;
+        
+        // var query = context.AggregatedSales.FromSqlInterpolated(
+        //     $"INSERT INTO aggregated_sales (OrderDate,EventDate,VenueId,EventId,AreaId,PriceLevelId,TicketCount) VALUES ({orderDate},{eventDate},{venueId},{eventId},{areaId},{priceLevelId},{ticketCount}) ON DUPLICATE KEY UPDATE TicketCount=TicketCount+{ticketCount}");
+        //
+        // var result = query.AsAsyncEnumerable();
+        // await result.FirstOrDefaultAsync();
+        //
+        // Console.WriteLine(
+        //     $"MySqlCheckoutEntityRepository.UpsertAggregatedSalesRecord> [{record.TicketCount}] tickets");
+        
+        var result = await context.Database.ExecuteSqlInterpolatedAsync(
+            $"INSERT INTO aggregated_sales (OrderDate,EventDate,VenueId,EventId,AreaId,PriceLevelId,TicketCount) VALUES ({orderDate},{eventDate},{venueId},{eventId},{areaId},{priceLevelId},{ticketCount}) ON DUPLICATE KEY UPDATE TicketCount=TicketCount+{ticketCount}");
+        
+        Console.WriteLine(
+            $"MySqlCheckoutEntityRepository.UpsertAggregatedSalesRecord> [{result}] rows affected");
+    }
+
     public class CheckoutDbContext : DbContext
     {
         public CheckoutDbContext(DbContextOptions options) : base(options)
@@ -146,6 +221,8 @@ public class MySqlCheckoutEntityRepository : ICheckoutEntityRepository
 
         public DbSet<OrderContractForDb> Orders { get; set; }
         public DbSet<TicketContractForDb> Tickets { get; set; }
+        public DbSet<WorkflowStateRecord> WorkflowStates { get; set; }
+        public DbSet<AggregatedSalesRecord> AggregatedSales { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -160,9 +237,25 @@ public class MySqlCheckoutEntityRepository : ICheckoutEntityRepository
                 .WithMany(o => o.Tickets)
                 .IsRequired(true)
                 .HasForeignKey(t => t.OrderNumber);
+
+            modelBuilder.Entity<WorkflowStateRecord>().HasKey(
+                nameof(WorkflowStateRecord.OrderNumber),
+                nameof(WorkflowStateRecord.AwaitStateName)
+            ).HasName("PK_Workflow");
+
+            modelBuilder.Entity<AggregatedSalesRecord>().HasKey(
+                nameof(AggregatedSalesRecord.OrderDate),
+                nameof(AggregatedSalesRecord.EventDate),
+                nameof(AggregatedSalesRecord.EventId),
+                nameof(AggregatedSalesRecord.VenueId),
+                nameof(AggregatedSalesRecord.AreaId),
+                nameof(AggregatedSalesRecord.PriceLevelId)
+            ).HasName("PK_Workflow");
             
             modelBuilder.Entity<OrderContractForDb>().ToTable("orders");
             modelBuilder.Entity<TicketContractForDb>().ToTable("tickets");
+            modelBuilder.Entity<WorkflowStateRecord>().ToTable("workflow_states");
+            modelBuilder.Entity<AggregatedSalesRecord>().ToTable("aggregated_sales");
         }
     }
 

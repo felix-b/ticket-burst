@@ -1,34 +1,43 @@
 #pragma warning disable CS1998
+#pragma warning disable CS8618
 
-using System.Collections.Immutable;
-using System.Net.Mail;
-using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
+using TicketBurst.CheckoutService.Contracts;
 using TicketBurst.CheckoutService.Integrations;
 using TicketBurst.Contracts;
 using TicketBurst.ServiceInfra;
-#pragma warning disable CS8618
 
 namespace TicketBurst.CheckoutService.Controllers;
 
 [ApiController]
-[Route("checkout")]
+[Route("workflow")]
 public class CheckoutWorkflowController : ControllerBase
 {
+    private readonly ICheckoutEntityRepository _entityRepo;
+
+    public CheckoutWorkflowController(ICheckoutEntityRepository entityRepo)
+    {
+        _entityRepo = entityRepo;
+    }
+
     [HttpPost("begin")]
     [ProducesResponseType(200)]
     [ProducesResponseType(400)]
-    public async Task BeginWorkflow(
+    public async Task<ActionResult<ReplyContract<string>>> BeginWorkflow(
         [FromBody] BeginWorkflowRequest request)
     {
-        Console.WriteLine("--------BeginWorkflow---------");
-        Console.WriteLine($"> order number [{request.OrderNumber}]");
-        Console.WriteLine($"> task token [{request.TaskToken}]");
-    }
+        Console.WriteLine($"CheckoutWorkflowController.BeginWorkflow number[{request.OrderNumber}] state[{request.StateName}] token[{request.TaskToken}]");
 
-    public class BeginWorkflowRequest
-    {
-        public uint OrderNumber { get; set; }
-        public string TaskToken { get; set; }
+        try
+        {
+            var record = new WorkflowStateRecord(request.OrderNumber, request.StateName, request.TaskToken);
+            await _entityRepo.InsertWorkflowStateRecord(record);
+            return ApiResult.Success(200, "OK");
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            return ApiResult.Error(400, "AlreadyExists");
+        }
     }
 }

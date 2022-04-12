@@ -11,11 +11,13 @@ public class NotificationController : ControllerBase
 {
     private readonly IPaymentGatewayPlugin _paymentPlugin;
     private readonly ISagaEnginePlugin _sagaEngine;
+    private readonly ICheckoutEntityRepository _entityRepo;
 
-    public NotificationController(IPaymentGatewayPlugin paymentPlugin, ISagaEnginePlugin sagaEngine)
+    public NotificationController(IPaymentGatewayPlugin paymentPlugin, ISagaEnginePlugin sagaEngine, ICheckoutEntityRepository entityRepo)
     {
         _paymentPlugin = paymentPlugin;
         _sagaEngine = sagaEngine;
+        _entityRepo = entityRepo;
     }
 
     [HttpPost("payment")]
@@ -40,7 +42,15 @@ public class NotificationController : ControllerBase
             return ApiResult.Error(400);
         }
 
-        await _sagaEngine.DispatchPaymentCompletionEvent(paymentToken, orderNumber, orderStatus);
+        var workflowState = await _entityRepo.TryGetWorkflowStateRecord(orderNumber);
+        if (workflowState == null)
+        {
+            return ApiResult.Error(400, "WorkflowNotFound");
+        }
+            
+        await _sagaEngine.DispatchPaymentCompletionEvent(workflowState.AwaitStateToken, paymentToken, orderNumber, orderStatus);
+        await _entityRepo.DeleteWorkflowStateRecord(orderNumber);
+
         return ApiResult.Success(200, "OK");
     }
 }

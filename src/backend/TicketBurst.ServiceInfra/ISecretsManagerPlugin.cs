@@ -16,5 +16,6 @@ public record ConnectionStringSecret(
 public record EmailServiceSecret(
     string Role,
     string Region,
-    string ConfigSetName
+    string ConfigSetName,
+    string CheckoutStateMachineArn
 );
