@@ -10,12 +10,13 @@
         "Method": "POST",
         "Path": "/workflow/begin",
         "Headers": {
-          "Content-Type": "application/json",
-          "Accept": "application/json"
+          "Content-Type": ["application/json"],
+          "Accept": ["application/json"]
         },        
         "RequestBody": {
           "orderNumber.$": "$.order.orderNumber",
-          "taskToken.$": "$$.Task.Token"
+          "taskToken.$": "$$.Task.Token",
+          "stateName": "AwaitWebhookFromPaymentGateway"
         },
         "AuthType": "NO_AUTH"
       },
@@ -30,13 +31,13 @@
         "Method": "POST",
         "Path": "/order/update-status",
         "Headers": {
-          "Content-Type": "application/json",
-          "Accept": "application/json"
+          "Content-Type": ["application/json"],
+          "Accept": ["application/json"]
         },
         "RequestBody": {
           "orderNumber.$": "$.order.orderNumber",
-          "orderStatus.$": "$.paymentResult.orderStatus",
-          "paymentToken.$": "$.paymentResult.paymentToken"
+          "orderStatus": 2,
+          "paymentToken": "DemoTokenTestValue12345"
         },
         "AuthType": "NO_AUTH"
       },
@@ -51,15 +52,24 @@
         "Method": "POST",
         "Path": "/reporting/add-order",
         "Headers": {
-          "Content-Type": "application/json",
-          "Accept": "application/json"
+          "Content-Type": ["application/json"],
+          "Accept": ["application/json"]
         },
         "RequestBody": {
-          "order.$": "$.order"
+          "orderNumber.$":"$.order.orderNumber",
+          "reservationId.$":"$.order.reservationId",
+          "orderDate.$":"$.order.orderDate",
+          "eventDate.$":"$.order.eventDate",
+          "venueId.$":"$.order.venueId",
+          "eventId.$":"$.order.eventId",
+          "areaId.$":"$.order.areaId",
+          "priceLevelId.$":"$.order.priceLevelId",
+          "ticketCount.$":"$.order.ticketCount"
         },
         "AuthType": "NO_AUTH"
       },
-      "Next": "ShipTickets"
+      "Next": "ShipTickets",
+      "ResultPath": null
     },
     "ShipTickets": {
       "Type": "Task",
@@ -69,8 +79,8 @@
         "Method": "POST",
         "Path": "/shipment/ship-tickets",
         "Headers": {
-          "Content-Type": "application/json",
-          "Accept": "application/json"
+          "Content-Type": ["application/json"],
+          "Accept": ["application/json"]
         },
         "RequestBody": {
           "orderNumber.$": "$.order.orderNumber"
