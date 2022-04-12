@@ -1,0 +1,68 @@
+{
+  "Comment": "Ticketburst - buyer web app, checkout workflow",
+  "StartAt": "AwaitWebhookFromPaymentGateway",
+  "States": {
+    "AwaitWebhookFromPaymentGateway": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::apigateway:invoke.waitForTaskToken",
+      "Parameters": {
+        "ApiEndpoint": "3cnuf521pd.execute-api.eu-south-1.amazonaws.com",
+        "Method": "POST",
+        "Path": "/workflow/begin",
+        "RequestBody": {
+          "orderNumber.$": "$.order.orderNumber",
+          "taskToken.$": "$$.Task.Token"
+        },
+        "AuthType": "NO_AUTH"
+      },
+      "ResultPath": "$.paymentResult",
+      "Next": "UpdateOrderStatus"
+    },
+    "UpdateOrderStatus": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::apigateway:invoke",
+      "Parameters": {
+        "ApiEndpoint": "3cnuf521pd.execute-api.eu-south-1.amazonaws.com",
+        "Method": "POST",
+        "Path": "/order/update-status",
+        "RequestBody": {
+          "orderNumber.$": "$.order.orderNumber",
+          "orderStatus.$": "$.paymentResult.orderStatus",
+          "paymentToken.$": "$.paymentResult.paymentToken"
+        },
+        "AuthType": "NO_AUTH"
+      },
+      "Next": "UpdateReportingTable",
+      "ResultPath": null
+    },
+    "UpdateReportingTable": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::apigateway:invoke",
+      "Parameters": {
+        "ApiEndpoint": "3cnuf521pd.execute-api.eu-south-1.amazonaws.com",
+        "Method": "POST",
+        "Path": "/reporting/add-order",
+        "RequestBody": {
+          "order.$": "$.order"
+        },
+        "AuthType": "NO_AUTH"
+      },
+      "Next": "ShipTickets"
+    },
+    "ShipTickets": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::apigateway:invoke",
+      "Parameters": {
+        "ApiEndpoint": "3cnuf521pd.execute-api.eu-south-1.amazonaws.com",
+        "Method": "POST",
+        "Path": "/shipment/ship-tickets",
+        "RequestBody": {
+          "orderNumber.$": "$.order.orderNumber"
+        },
+        "AuthType": "NO_AUTH"
+      },
+      "End": true
+    }
+  },
+  "TimeoutSeconds": 3600
+}
