@@ -35,7 +35,7 @@ spec:
         appsvc: ticketburst-checkout
       containers:
       - name: ticketburst-services-checkout
-        image: 381777116710.dkr.ecr.eu-south-1.amazonaws.com/ticketburst-checkout:74a2344
+        image: 381777116710.dkr.ecr.eu-south-1.amazonaws.com/ticketburst-checkout:dbc5df3
         ports:
         - containerPort: 80
         command: ["/app/checkoutd"]
