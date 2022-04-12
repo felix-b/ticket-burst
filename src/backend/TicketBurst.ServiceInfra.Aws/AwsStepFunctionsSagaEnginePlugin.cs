@@ -48,7 +48,7 @@ public class AwsStepFunctionsSagaEnginePlugin : ISagaEnginePlugin
             };
             var workflowStateJson = JsonSerializer.Serialize(workflowState); 
             var startExecutionRequest = new StartExecutionRequest {
-                Name = $"checkout_order_${order.OrderNumber}",
+                Name = $"ORDER{order.OrderNumber}",
                 Input = workflowStateJson,
                 StateMachineArn = _secret.CheckoutStateMachineArn
             };
