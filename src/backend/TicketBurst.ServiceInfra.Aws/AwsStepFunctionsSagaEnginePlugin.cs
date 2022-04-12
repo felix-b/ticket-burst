@@ -12,12 +12,17 @@ public class AwsStepFunctionsSagaEnginePlugin : ISagaEnginePlugin
     private readonly EmailServiceSecret _secret;
     private readonly AWSCredentials _credentials;
     private readonly Amazon.RegionEndpoint _regionEndpoint;
+    private readonly JsonSerializerOptions _jsonOptions;
 
     public AwsStepFunctionsSagaEnginePlugin(EmailServiceSecret secret)
     {
         _secret = secret;
         Console.WriteLine($"AwsStepFunctionsSagaEnginePlugin> ctor, role=[{secret.Role}], region=[{secret.Region}], workflowArn=[{secret.CheckoutStateMachineArn}]");
 
+        _jsonOptions = new JsonSerializerOptions {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
+        
         try
         {
             var instanceProfileCreds = new InstanceProfileAWSCredentials(secret.Role);
@@ -46,7 +51,7 @@ public class AwsStepFunctionsSagaEnginePlugin : ISagaEnginePlugin
                     PaymentStatus = OrderStatus.CompletionInProgress.ToString()
                 }
             };
-            var workflowStateJson = JsonSerializer.Serialize(workflowState); 
+            var workflowStateJson = JsonSerializer.Serialize(workflowState, _jsonOptions); 
             var startExecutionRequest = new StartExecutionRequest {
                 Name = $"ORDER{order.OrderNumber}",
                 Input = workflowStateJson,
@@ -73,7 +78,7 @@ public class AwsStepFunctionsSagaEnginePlugin : ISagaEnginePlugin
             var resultObject = new CheckoutWorkflowStateContract.PaymentResultPart {
                 PaymentStatus = orderStatus.ToString()
             };
-            var resultObjectJson = JsonSerializer.Serialize(resultObject);
+            var resultObjectJson = JsonSerializer.Serialize(resultObject, _jsonOptions);
             var request = new SendTaskSuccessRequest() {
                 TaskToken = awaitStateToken,
                 Output = resultObjectJson

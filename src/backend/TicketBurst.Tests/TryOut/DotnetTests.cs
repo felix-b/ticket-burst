@@ -8,6 +8,7 @@ using System.Text.Json.Serialization;
 using FluentAssertions;
 using Murmur;
 using NUnit.Framework;
+using TicketBurst.Contracts;
 
 namespace TicketBurst.Tests.TryOut;
 
@@ -27,6 +28,34 @@ public class DotnetTests
         secret!.Host.Should().Be("MY_HOST");
         secret!.UserName.Should().Be("MY_USER");
         secret!.Port.Should().Be(3306);
+    }
+
+    [Test]
+    public void CanSerializeJsonWithCamelCaseProperties()
+    {
+        var options = new JsonSerializerOptions {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
+        var data = new CheckoutWorkflowStateContract.PaymentResultPart() {
+            PaymentStatus = OrderStatus.Completed.ToString()
+        };
+
+        var json = JsonSerializer.Serialize(data, options);
+
+        json.Should().Be("{\"paymentStatus\":\"Completed\"}");
+    }
+
+    [Test]
+    public void CanDeserializeJsonWithCamelCaseProperties()
+    {
+        var options = new JsonSerializerOptions {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
+        var json = "{\"paymentStatus\":\"Completed\"}";
+        var data = JsonSerializer.Deserialize<CheckoutWorkflowStateContract.PaymentResultPart>(json, options);
+
+        data.Should().NotBeNull();
+        data.PaymentStatus.Should().Be(OrderStatus.Completed.ToString());
     }
 
     //[Test]
