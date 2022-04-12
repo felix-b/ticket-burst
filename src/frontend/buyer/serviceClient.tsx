@@ -3,9 +3,9 @@ import { BeginCheckoutRequest, GrabSeatsReply, GrabSeatsRequest, OrderContract }
 export type ServiceName = 'search' | 'reservation' | 'checkout'
 
 const urlByServiceName: Record<ServiceName, string> = {
-    'search': 'http://localhost:3001',//'https://3cnuf521pd.execute-api.eu-south-1.amazonaws.com',
-    'reservation': 'http://localhost:3002',//'https://3cnuf521pd.execute-api.eu-south-1.amazonaws.com',
-    'checkout': 'http://localhost:3003',//'https://3cnuf521pd.execute-api.eu-south-1.amazonaws.com',
+    'search': 'https://3cnuf521pd.execute-api.eu-south-1.amazonaws.com',
+    'reservation': 'https://3cnuf521pd.execute-api.eu-south-1.amazonaws.com',
+    'checkout': 'https://3cnuf521pd.execute-api.eu-south-1.amazonaws.com',
 }
 
 const getServiceUrl = (serviceName: ServiceName): string => {
