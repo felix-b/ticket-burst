@@ -2,11 +2,22 @@ import { BeginCheckoutRequest, GrabSeatsReply, GrabSeatsRequest, OrderContract }
 
 export type ServiceName = 'search' | 'reservation' | 'checkout'
 
+const env = process.env.NODE_ENV
+const isProduction = (env !== "development")
+
 const urlByServiceName: Record<ServiceName, string> = {
-    'search': 'https://3cnuf521pd.execute-api.eu-south-1.amazonaws.com',
-    'reservation': 'https://3cnuf521pd.execute-api.eu-south-1.amazonaws.com',
-    'checkout': 'https://3cnuf521pd.execute-api.eu-south-1.amazonaws.com',
+    'search': isProduction 
+        ? 'https://3cnuf521pd.execute-api.eu-south-1.amazonaws.com' 
+        : 'http://localhost:3001',
+    'reservation': isProduction 
+        ? 'https://3cnuf521pd.execute-api.eu-south-1.amazonaws.com'
+        : 'http://localhost:3002',
+    'checkout': isProduction 
+        ? 'https://3cnuf521pd.execute-api.eu-south-1.amazonaws.com'
+        : 'http://localhost:3003'
 }
+
+console.log(`isProduction = ${isProduction}`)
 
 const getServiceUrl = (serviceName: ServiceName): string => {
     return urlByServiceName[serviceName]

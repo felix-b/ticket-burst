@@ -28,6 +28,12 @@ public class InMemoryCheckoutEntityRepository : ICheckoutEntityRepository
         return MockDatabase.Orders.GetTop(count);
     }
 
+    public Task UpsertAggregatedSalesRecord(AggregatedSalesRecord record)
+    {
+        // do nothing
+        return Task.CompletedTask;
+    }
+
     public Task<IEnumerable<AggregatedSalesRecord>> GetRecentAggregatedSales(int count)
     {
         throw new NotImplementedException();
@@ -76,21 +82,20 @@ public class InMemoryCheckoutEntityRepository : ICheckoutEntityRepository
 
     public Task InsertWorkflowStateRecord(WorkflowStateRecord state)
     {
-        throw new NotImplementedException();
+        MockDatabase.Workflows.Insert(state);
+        return Task.CompletedTask;
+        
     }
 
     public Task<WorkflowStateRecord?> TryGetWorkflowStateRecord(uint orderNumber)
     {
-        throw new NotImplementedException();
+        var state = MockDatabase.Workflows.TryGet(orderNumber);
+        return Task.FromResult(state);
     }
 
     public Task DeleteWorkflowStateRecord(uint orderNumber)
     {
-        throw new NotImplementedException();
-    }
-
-    public Task UpsertAggregatedSalesRecord(AggregatedSalesRecord record)
-    {
-        throw new NotImplementedException();
+        MockDatabase.Workflows.Delete(orderNumber);
+        return Task.CompletedTask;
     }
 }
