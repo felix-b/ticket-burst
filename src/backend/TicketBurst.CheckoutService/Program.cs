@@ -40,7 +40,6 @@ var httpEndpoint = ServiceBootstrap.CreateHttpEndpoint(
     serviceDescription: "Handles checkout process, payment integration, and ticket delivery.",
     listenPortNumber: 3003,
     commandLineArgs: args,
-    isProduction: isAwsEnvironment,
     dataProtectionProvider: dataProtectionProvider,
     configure: builder => {
         builder.Services.AddSingleton<ICheckoutEntityRepository>(entityRepository);

@@ -8,8 +8,6 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Net.Http.Headers;
 using Microsoft.OpenApi.Models;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
 
 namespace TicketBurst.ServiceInfra;
 
@@ -20,7 +18,6 @@ public static class ServiceBootstrap
         string serviceDescription,
         int listenPortNumber,
         string[] commandLineArgs, 
-        bool isProduction,
         Action<WebApplicationBuilder>? configure = null,
         Action<IEndpointRouteBuilder>? mapRoutes = null,
         IDataProtectionProvider? dataProtectionProvider = null)
@@ -39,7 +36,9 @@ public static class ServiceBootstrap
         }
         else
         {
-            builder.Services.AddDataProtection().SetApplicationName("ticketburst");
+            builder.Services.AddDataProtection()
+                .SetApplicationName("ticketburst");
+                //.DisableAutomaticKeyGeneration();//TODO paameterize dev/prod env
         }
         
         builder.Services.AddCors(options => {
@@ -51,21 +50,6 @@ public static class ServiceBootstrap
         configure?.Invoke(builder);
         
         builder.Services.AddControllers();
-
-        builder.Services.AddOpenTelemetryTracing(trace => {
-            trace.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(serviceName));
-            trace.AddAspNetCoreInstrumentation();
-            trace.AddHttpClientInstrumentation();
-            
-            if (isProduction)
-            {
-                //TODO ??
-            }
-            else
-            {
-                trace.AddOtlpExporter(options => { options.Endpoint = new Uri("http://localhost:4317"); });
-            }
-        });
         
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         builder.Services.AddEndpointsApiExplorer();
@@ -81,6 +65,7 @@ public static class ServiceBootstrap
         var app = builder.Build();
 
         app.UseCors("the_cors_policy");
+        
         
         // Configure the HTTP request pipeline.
         app.UseSwagger();

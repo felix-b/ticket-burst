@@ -62,7 +62,6 @@ var httpEndpoint = ServiceBootstrap.CreateHttpEndpoint(
     serviceDescription: "Searches for events and available seats. Responsible for Venues, Events, and Seating Maps.",
     listenPortNumber: listenPortNumber,
     commandLineArgs: args,
-    isProduction: isAwsEnvironment,
     dataProtectionProvider: dataProtectionProvider,
     configure: builder => {
         builder.Services.AddSingleton<EventWarmupJob>();

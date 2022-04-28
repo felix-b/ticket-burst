@@ -30,12 +30,11 @@ var httpEndpoint = ServiceBootstrap.CreateHttpEndpoint(
     serviceDescription: "Searches for events and available seats. Responsible for Venues, Events, and Seating Maps.",
     listenPortNumber: 3001,
     commandLineArgs: args,
-    isProduction: isAwsEnvironment,
     configure: builder => {
         builder.Services.AddSingleton<ISearchEntityRepository>(searchEntityRepo);
         builder.Services.AddSingleton(eventSeatingCache);
     });
-    
+
 httpEndpoint.Run();
 
 ISearchEntityRepository UseMockDatabase()

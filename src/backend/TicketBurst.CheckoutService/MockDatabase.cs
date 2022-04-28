@@ -2,7 +2,6 @@
 // ReSharper disable InconsistentlySynchronizedField
 
 using System.Collections.Immutable;
-using TicketBurst.CheckoutService.Contracts;
 using TicketBurst.Contracts;
 
 namespace TicketBurst.CheckoutService;
@@ -74,35 +73,6 @@ public static class MockDatabase
             }
 
             return result;
-        }
-    }
-
-    public static class Workflows
-    {
-        private static readonly object __syncRoot = new();
-        private static ImmutableDictionary<uint, WorkflowStateRecord> __workflowByOrderNumber = ImmutableDictionary<uint, WorkflowStateRecord>.Empty;
-
-        public static void Insert(WorkflowStateRecord workflow)
-        {
-            lock (__syncRoot)
-            {
-                __workflowByOrderNumber = __workflowByOrderNumber.Add(workflow.OrderNumber, workflow);
-            }
-        }
-
-        public static WorkflowStateRecord? TryGet(uint orderNumber)
-        {
-            return __workflowByOrderNumber.TryGetValue(orderNumber, out var workflow)
-                ? workflow
-                : null;
-        }
-
-        public static void Delete(uint orderNumber)
-        {
-            lock (__syncRoot)
-            {
-                __workflowByOrderNumber = __workflowByOrderNumber.Remove(orderNumber);
-            }
         }
     }
 }
