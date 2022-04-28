@@ -14,6 +14,8 @@ namespace TicketBurst.SearchService.Controllers;
 [Route("search")]
 public class SearchController : ControllerBase
 {
+    private static bool __simulateSearchError = false;
+    
     private readonly ISearchEntityRepository _entityRepo;
     private readonly EventSeatingStatusCache _seatingCache;
 
@@ -31,6 +33,16 @@ public class SearchController : ControllerBase
     public async Task<ActionResult<ReplyContract<IEnumerable<EventSearchResultContract>>>> Get(
         [FromQuery] EventSearchRequestContract request)
     {
+        if (request.Id == "zzz")
+        {
+            __simulateSearchError = true;            
+        }
+        
+        if (__simulateSearchError)
+        {
+            return ApiResult.Error(500, "InternalError");
+        }
+        
         request.Count = Math.Min(100, request.Count ?? 20);
         var foundEvents = await _entityRepo.QueryEvents(request);
             
